@@ -161,3 +161,14 @@ class ReportMensile(models.Model):
     
     class Meta:
         verbose_name_plural = "Report mensili"
+
+# Model marcature
+class Marcatura(models.Model):
+    utente = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Utente")
+    orario = models.DateTimeField(auto_now_add=True, verbose_name="Orario della marcatura")
+
+    def __str__(self):
+        return f"Marcatura di {self.utente.username} alle {self.orario}"
+    
+    class Meta:
+        verbose_name_plural = "Marcature"

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from core.models import RegistroGiornaliero, PersonaleINAF, TurnoVigilanza, Accesso, Presenza, Log
+from core.models import RegistroGiornaliero, PersonaleINAF, TurnoVigilanza, Accesso, Presenza, Log, Marcatura
 from core.views import telegram
 from django.utils import timezone
 from django.contrib import messages
@@ -13,6 +13,19 @@ def homepage(request):
     if request.user.is_staff:
         return redirect('dashboard')
     
+    if request.method == "POST" and "esegui_marcatura" in request.POST:
+        
+        Marcatura.objects.create(
+            utente=request.user,
+            orario=timezone.now(),
+        )
+        
+        log = Log(timestamp=timezone.now(), utente=request.user, azione="Marcatura effettuata")
+        log.save()
+
+        messages.success(request, "Marcatura eseguita con successo")
+        return redirect('/')
+
     if request.method == "POST" and "data_ricerca" in request.POST:
         data = request.POST['data_ricerca']
         if data == timezone.now().date().strftime("%Y-%m-%d"):
@@ -33,6 +46,7 @@ def homepage(request):
     note = RegistroGiornaliero.objects.get(data=data).note
     registro = RegistroGiornaliero.objects.get(data=data)
     personaleINAFpresente = set(registro.presenza_set.filter(is_present=True).values_list('personale_id', flat=True))
+    ultimaMarcatura = Marcatura.objects.all().order_by('-orario').first()
     return render(request, 'homepage/index.html', {
         'data': data,
         'turno_attivo': turno_attivo,
@@ -40,6 +54,7 @@ def homepage(request):
         'note': note,
         'listaPersonaleINAF': personaleINAF,
         'personaleINAFpresente': personaleINAFpresente,
+        'ultimaMarcatura': ultimaMarcatura
     })
 
 def messaggioTelegram(request):

@@ -215,6 +215,25 @@
         [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
         .navbar { background-color: var(--bg-card) !important; border-bottom: 1px solid var(--border-color); }
 
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        .btn-urgent {
+            background-color: #dc3545 !important;
+            color: white !important;
+            animation: pulse-red 2s infinite;
+            border-color: #dc3545 !important;
+        }
+
+        .btn-warning-custom {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            border-color: #ffc107 !important;
+        }
+
     </style>
 </head>
 
@@ -398,6 +417,28 @@
                     </form>
                 </div>
 
+                <div class="card-custom p-3">
+                    <div class="row">
+                        <div class="col-12">
+                            <label class="section-label mb-1 lh-1">ULTIMA MARCATURA</label>
+                            <input type="text" class="form-control text-center fw-bold" 
+                                value="{% if ultimaMarcatura %}{{ ultimaMarcatura.orario|date:'H:i' }}{% else %}-{% endif %}" 
+                                disabled 
+                                title="Orario ultima marcatura"
+                                id="ultima_marcatura">
+                        </div>
+                        <div class="col-12 mt-3">
+                            <form method="post" action=""> 
+                                {% csrf_token %}
+                                <input type="hidden" name="esegui_marcatura" id="esegui_marcatura">
+                                <button type="submit" id="btnMarcatura" class="btn btn-primary-custom w-100 fw-medium d-flex align-items-center justify-content-center gap-2">
+                                    <i class="bi bi-check2-circle"></i> Esegui marcatura
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <form method="post" action="{% url 'aggiornaRegistro' %}">
                     {% csrf_token %}
                     
@@ -562,9 +603,7 @@
             const currentTheme = document.documentElement.getAttribute('data-theme');
             setTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
-    </script>
 
-    <script>
         document.addEventListener('DOMContentLoaded', function() {
             let bsReplyModal = new bootstrap.Modal(document.getElementById('replyModal'));
             const replyBox = document.getElementById('reply-box');
@@ -574,53 +613,115 @@
                 replyBox.innerHTML = '';
             });
 
-            const repliesSocket = new WebSocket(
-                (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/ws/replies/'
-            );
+            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const wsUrl = protocol + window.location.host + '/ws/replies/';
 
-            repliesSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                const message = data.message;
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                replyBox.innerHTML += `<div class="mb-2 pb-2 border-bottom" style="border-color: var(--border-color) !important;"><strong style="color: var(--primary-color);">${timeStr}:</strong> ${message}</div>`;
-                bsReplyModal.show();
-                replyNotification.classList.remove('d-none');
-            };
-            repliesSocket.onclose = function(e) {
-                console.error('Chat socket closed unexpectedly');
-            };
+            try {
+                const repliesSocket = new WebSocket(wsUrl);
+
+                repliesSocket.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    const message = data.message;
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    replyBox.innerHTML += `<div class="mb-2 pb-2 border-bottom" style="border-color: var(--border-color) !important;"><strong style="color: var(--primary-color);">${timeStr}:</strong> ${message}</div>`;
+                    bsReplyModal.show();
+                    replyNotification.classList.remove('d-none');
+                };
+                repliesSocket.onclose = function(e) {
+                    console.log('Chat socket closed');
+                };
+            } catch(e) {
+                console.warn("WebSocket non disponibile o errore connessione");
+            }
         });
-    </script>
 
-    <script>
+        let alertState = 'ok'; 
+
         function updateTime() {
             const now = new Date();
             const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             const dateString = now.toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'long'});
-            document.getElementById('current-time-clock').textContent = timeString;
-            document.getElementById('current-date-display').textContent = dateString;
+            
+            const clockEl = document.getElementById('current-time-clock');
+            if(clockEl) clockEl.textContent = timeString;
+            
+            const dateEl = document.getElementById('current-date-display');
+            if(dateEl) dateEl.textContent = dateString;
+            checkDeadline(now);
         }
-        setInterval(updateTime, 1000);
-        updateTime();
 
-        const modal = document.getElementById('modificaPersonaleEsternoModal');
-        modal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const id = button.getAttribute('data-id');
-            modal.querySelector('#nominativi').value = button.getAttribute('data-nominativi') || '';
-            modal.querySelector('#ditta').value = button.getAttribute('data-ditta') || '';
-            modal.querySelector('#oraIngresso').value = button.getAttribute('data-ora-ingresso') || '';
-            modal.querySelector('#oraUscita').value = button.getAttribute('data-ora-uscita') || '';
-            modal.querySelector('#deleteBTN').setAttribute('formaction', `/eliminaAccesso/${id}/`);
-            modal.querySelector('form').action = `/aggiornaAccesso/${id}/`;
-        });
+        function checkDeadline(now) {
+            const lastMarkInput = document.getElementById('ultima_marcatura');
+            const btnMarcatura = document.getElementById('btnMarcatura');
+            
+            if (!lastMarkInput || !btnMarcatura) return;
+
+            const lastMarkStr = lastMarkInput.value.trim();
+            
+            if (!lastMarkStr || lastMarkStr === '-' || lastMarkStr.indexOf(':') === -1) {
+                return;
+            }
+
+            const [hours, minutes] = lastMarkStr.split(':').map(Number);
+            let lastMarkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+
+            if (lastMarkDate > now) {
+                lastMarkDate.setDate(lastMarkDate.getDate() - 1);
+            }
+
+            const deadlineDate = new Date(lastMarkDate.getTime() + 60 * 60 * 1000);
+            const diffMs = deadlineDate - now;
+            const minutesLeft = Math.floor(diffMs / 1000 / 60);
+
+            btnMarcatura.classList.remove('btn-warning-custom', 'btn-urgent');
+
+            if (minutesLeft <= 5) {
+                btnMarcatura.classList.add('btn-urgent');
+                if (alertState !== 'urgent' && minutesLeft > -60) { 
+                    alert(`⚠️ URGENTE\n\nScadenza marcatura: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano meno di 5 minuti!)`);
+                    alertState = 'urgent';
+                }
+            } 
+            else if (minutesLeft <= 10) {
+                btnMarcatura.classList.add('btn-warning-custom');
+                if (alertState !== 'warning') {
+                    alert(`ℹ️ AVVISO\n\nProssima marcatura prevista per le: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano 10 minuti)`);
+                    alertState = 'warning';
+                }
+            } 
+            else {
+                alertState = 'ok';
+            }
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime(); 
+
+        const editModalEl = document.getElementById('modificaPersonaleEsternoModal');
+        if (editModalEl) {
+            editModalEl.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const id = button.getAttribute('data-id');
+                
+                editModalEl.querySelector('#nominativi').value = button.getAttribute('data-nominativi') || '';
+                editModalEl.querySelector('#ditta').value = button.getAttribute('data-ditta') || '';
+                editModalEl.querySelector('#oraIngresso').value = button.getAttribute('data-ora-ingresso') || '';
+                editModalEl.querySelector('#oraUscita').value = button.getAttribute('data-ora-uscita') || '';
+                
+                const deleteBtn = editModalEl.querySelector('#deleteBTN');
+                if(deleteBtn) deleteBtn.setAttribute('formaction', `/eliminaAccesso/${id}/`);
+                
+                const form = editModalEl.querySelector('form');
+                if(form) form.action = `/aggiornaAccesso/${id}/`;
+            });
+        }
 
         let timeLeft = 300;
         const countdownElement = document.getElementById('countdown');
         const countdownTimer = setInterval(() => {
             timeLeft--;
-            countdownElement.textContent = timeLeft;
+            if(countdownElement) countdownElement.textContent = timeLeft;
             if (timeLeft <= 0) {
                 clearInterval(countdownTimer);
                 location.reload();
