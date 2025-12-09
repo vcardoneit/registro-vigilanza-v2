@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     cron \
     gosu \
+    netcat-openbsd \
     locales \
     && rm -rf /var/lib/apt/lists/* && \
     sed -i '/it_IT.UTF-8/s/^# //g' /etc/locale.gen && \
