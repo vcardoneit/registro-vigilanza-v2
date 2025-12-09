@@ -165,7 +165,6 @@
                     
                     <div class="tab-pane fade" id="invoices" role="tabpanel">
                         {% if fatture %}
-                            {# MODIFICA: Raggruppa per Anno basandosi su data_riferimento #}
                             {% regroup fatture by data_riferimento|date:"Y" as invoices_by_year %}
                             
                             <div class="accordion" id="accordionInvoices">
@@ -179,7 +178,6 @@
                                     <div id="collapseInv{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionInvoices">
                                         <div class="accordion-body p-0">
                                             
-                                            {# MODIFICA: Raggruppa per Mese basandosi su data_riferimento #}
                                             {% regroup year.list by data_riferimento|date:"F" as invoices_by_month %}
                                             
                                             <div class="accordion accordion-flush" id="accordionInvMonths{{ year.grouper }}">
@@ -251,7 +249,6 @@
 
                     <div class="tab-pane fade" id="shifts" role="tabpanel">
                         {% if turni %}
-                            {# MODIFICA: Raggruppa per Anno basandosi su data_riferimento #}
                             {% regroup turni by data_riferimento|date:"Y" as shifts_by_year %}
                             
                             <div class="accordion" id="accordionShifts">
@@ -265,7 +262,6 @@
                                     <div id="collapseShift{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionShifts">
                                         <div class="accordion-body p-0">
                                             
-                                            {# MODIFICA: Raggruppa per Mese basandosi su data_riferimento #}
                                             {% regroup year.list by data_riferimento|date:"F" as shifts_by_month %}
                                             
                                             <div class="accordion accordion-flush" id="accordionShiftMonths{{ year.grouper }}">
@@ -292,7 +288,7 @@
                                                                     <tr class="nrm">
                                                                         <td>
                                                                             <div class="d-flex align-items-center">
-                                                                                <div class="file-icon xls"><i class="bi bi-table"></i></div>
+                                                                                <div class="file-icon pdf"><i class="bi bi-file-earmark-pdf"></i></div>
                                                                                 <div>
                                                                                     <span class="fw-bold d-block text-truncate" style="max-width: 250px;" title="{{ turno.nome_file }}">
                                                                                         {{ turno.nome_file }}

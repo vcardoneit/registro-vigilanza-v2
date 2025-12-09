@@ -51,8 +51,8 @@ INSTALLED_APPS = [
 ]
 
 CRONJOBS = [
-    ('0 3 * * *', 'django.core.management.generaReport', ['generaReport']),
-    ('2 0 * * *', 'django.core.management.aggiornaTurni', ['aggiornaTurni']),
+    ('15 0 * * *', 'django.core.management.generaReport', ['generaReport']),
+    ('5 0 * * *', 'django.core.management.aggiornaTurni', ['aggiornaTurni']),
 ]
 
 MIDDLEWARE = [

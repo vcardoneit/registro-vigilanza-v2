@@ -222,8 +222,18 @@ def logs(request):
 
 def esportaLogs(request):
     if request.method == "POST" and request.user.is_staff:
-        data_inizio = parse_datetime(request.POST.get("date_start"))
-        data_fine = parse_datetime(request.POST.get("date_end"))
+        data_inizio_naive = parse_datetime(request.POST.get("date_start"))
+        data_fine_naive = parse_datetime(request.POST.get("date_end"))
+
+        if data_inizio_naive and timezone.is_naive(data_inizio_naive):
+            data_inizio = timezone.make_aware(data_inizio_naive)
+        else:
+            data_inizio = data_inizio_naive
+
+        if data_fine_naive and timezone.is_naive(data_fine_naive):
+            data_fine = timezone.make_aware(data_fine_naive)
+        else:
+            data_fine = data_fine_naive
         users = request.POST.get("user_select")
         
         logs = Log.objects.filter(
