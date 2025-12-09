@@ -1,0 +1,188 @@
+{% load static %}
+<!doctype html>
+<html lang="it" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>{% block title %}Vigilanza{% endblock %}</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/bootstrap-icons.min.css' %}">
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <nav class="sidebar shadow-sm" id="sidebar">
+        <div class="sidebar-header">
+            <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
+            <span>Vigilanza</span>
+            <button class="btn-close d-lg-none ms-auto bg-white" onclick="toggleSidebar()"></button>
+        </div>
+
+        {% with url_name=request.resolver_match.url_name %}
+        {% if request.user.username == "centrale_operativa" %}
+        <div class="d-flex flex-column py-2 h-100">
+            <a href="{% url 'documenti' %}" class="nav-link-custom {% if url_name == 'documenti' %}active{% endif %}">
+                <i class="bi bi-file-earmark-text"></i> Documenti
+            </a>
+            <div style="flex-grow: 1;"></div>
+        </div>
+        {% else %}
+        <div class="d-flex flex-column py-2 h-100">
+            <a href="{% url 'dashboard' %}" class="nav-link-custom {% if url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-grid-1x2"></i> Dashboard
+            </a>
+            <a href="{% url 'impostazioni' %}" class="nav-link-custom {% if url_name == 'impostazioni' %}active{% endif %}">
+                <i class="bi bi-gear"></i> Impostazioni
+            </a>
+            <a href="{% url 'utenti' %}" class="nav-link-custom {% if url_name == 'utenti' %}active{% endif %}">
+                <i class="bi bi-people"></i> Utenti
+            </a>
+            <a href="{% url 'logs' %}" class="nav-link-custom {% if url_name == 'logs' %}active{% endif %}">
+                <i class="bi bi-journal-text"></i> Logs
+            </a>
+            <a href="{% url 'documenti' %}" class="nav-link-custom {% if url_name == 'documenti' %}active{% endif %}">
+                <i class="bi bi-file-earmark-text"></i> Documenti
+            </a>
+            <a href="{% url 'ricerca' %}" class="nav-link-custom {% if url_name == 'ricerca' %}active{% endif %}">
+                <i class="bi bi-search"></i> Ricerca Dati
+            </a>
+            <div style="flex-grow: 1;"></div>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="user-section">
+            <div class="d-flex align-items-center mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-primary fw-bold user-avatar" style="width: 40px; height: 40px; background-color: #e0e7ff; font-size: 1.2rem; flex-shrink: 0;">
+                    {{ request.user.username|make_list|first|upper }}
+                </div>
+                <div class="ms-3 overflow-hidden">
+                    <p class="mb-0 fw-bold text-dark text-truncate">{{ request.user.get_full_name }}</p>
+                    {% if request.user.username != "centrale_operativa" %}
+                    <small class="text-muted">Staff INAF</small>
+                    {% endif %}
+                </div>
+
+            </div>
+            
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger w-100 btn-sm fw-semibold" style="background-color: #dc3545; color: white">
+                    <i class="bi bi-box-arrow-right"></i> Esci
+                </button>
+            </form>
+
+            <div class="text-center mt-3 pt-2 border-top border-secondary-subtle">
+                <small class="text-muted" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+                    v1.1.0 &copy; 2025
+                </small>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn-menu-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h3 class="mb-0 fw-bold text-dark fs-4">{% block page_title %}Titolo{% endblock %}</h3>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                {% block header_actions %}{% endblock %}
+                
+                <button class="theme-toggle-btn" id="themeToggle" title="Cambia tema">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                </button>
+                
+                {% block header_extra %}{% endblock %}
+            </div>
+        </div>
+
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block modals %}{% endblock %}
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const htmlElement = document.documentElement;
+            const themeToggleBtn = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            setTheme(currentTheme);
+
+            if(themeToggleBtn) {
+                themeToggleBtn.addEventListener('click', () => {
+                    const newTheme = htmlElement.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+                    setTheme(newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+
+            function setTheme(theme) {
+                htmlElement.setAttribute('data-bs-theme', theme);
+                if (theme === 'dark') {
+                    if(themeIcon) {
+                        themeIcon.classList.remove('bi-moon-stars-fill');
+                        themeIcon.classList.add('bi-sun-fill');
+                    }
+                    document.querySelectorAll('.theme-date-container').forEach(el => {
+                        el.classList.remove('bg-white');
+                        el.style.backgroundColor = '#2d2d2d';
+                    });
+                    document.querySelectorAll('.theme-empty-state').forEach(el => {
+                        el.classList.remove('bg-white');
+                        el.style.backgroundColor = '#1e1e1e';
+                    });
+                    document.querySelectorAll('.modal-footer').forEach(el => el.classList.remove('bg-light'));
+                    document.querySelectorAll('.input-group-text').forEach(el => el.classList.remove('bg-light'));
+
+                } else {
+                    if(themeIcon) {
+                        themeIcon.classList.remove('bi-sun-fill');
+                        themeIcon.classList.add('bi-moon-stars-fill');
+                    }
+                    document.querySelectorAll('.theme-date-container').forEach(el => {
+                        el.classList.add('bg-white');
+                        el.style.backgroundColor = '';
+                    });
+                    document.querySelectorAll('.theme-empty-state').forEach(el => {
+                        el.classList.add('bg-white');
+                        el.style.backgroundColor = '';
+                    });
+                    document.querySelectorAll('.modal-footer').forEach(el => el.classList.add('bg-light'));
+                    document.querySelectorAll('.input-group-text').forEach(el => el.classList.add('bg-light'));
+                }
+            }
+        });
+    </script>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

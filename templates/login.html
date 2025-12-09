@@ -1,0 +1,220 @@
+{% load static %}
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <title>Registro Vigilanza - Accesso</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'bootstrap-icons/bootstrap-icons.min.css' %}">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 15px;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-img {
+            width: 100%;            
+            max-width: 280px;       
+            height: auto;           
+            object-fit: contain;
+            
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .login-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background-color: #fff;
+            padding: 2rem 1rem 0.5rem 1rem;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-1px);
+        }
+
+        .form-floating > .form-control,
+        .form-floating > .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-floating > .form-control:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+
+        .secondary-links a {
+            text-decoration: none;
+            color: #6c757d;
+            font-size: 0.9rem;
+            padding: 5px;
+            display: inline-block;
+        }
+        
+        .secondary-links a:hover {
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="login-wrapper">
+        
+        <div class="logo-container">
+            <img src="{% static 'inaf-fondo-trasparente.png' %}" class="logo-img" alt="Logo Istituto">
+        </div>
+
+        <div class="card login-card">
+            <div class="card-header-custom">
+                <h1 class="h4 fw-bold text-dark mb-0">Registro Vigilanza</h1>
+                <p class="text-muted small mb-0 mt-1">Accedi al portale</p>
+            </div>
+            
+            <div class="card-body p-4">
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show rounded-3 fs-6" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form id="loginForm" name="loginForm" method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        {% if usernames %}
+                        <div class="form-floating">
+                            <select name="username" class="form-select" id="username" aria-label="Seleziona utente">
+                                <option value="def" selected disabled>Seleziona utente...</option>
+                                {% for username in usernames %}
+                                    <option value="{{ username }}">{{ username.first_name }} {{ username.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="username">Nome utente</label>
+                        </div>
+                        {% else %}
+                        <div class="form-floating">
+                            <input type="text" name="username" class="form-control" id="username" placeholder="Nome utente">
+                            <label for="username">Nome utente</label>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-floating">
+                            <input type="password" name="password" class="form-control" id="password" placeholder="Password">
+                            <label for="password">Password</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3 shadow-sm">
+                        Entra
+                    </button>
+                </form>
+
+                <div class="d-flex flex-column align-items-center gap-2 secondary-links mt-3 border-top pt-3">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#ldapModal">
+                        <i class="bi bi-building"></i> Accedi con credenziali INAF
+                    </a>
+                    <a href="{% url 'cambiaPassword' %}">
+                        <i class="bi bi-key"></i> Cambia password
+                    </a>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#centraleModal">
+                        <i class="bi bi-headset"></i> Centrale operativa
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="ldapModal" tabindex="-1" aria-labelledby="ldapModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered px-3"> <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="ldapModalLabel">Accesso INAF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form method="post" id="loginINAF" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="form-floating mb-3">
+                            <input type="text" name="ldap_username" class="form-control" id="ldap_username" placeholder="Utente INAF" required>
+                            <label for="ldap_username">Nome utente INAF</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <input type="password" name="ldap_password" class="form-control" id="ldap_password" placeholder="Password" required>
+                            <label for="ldap_password">Password</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Accedi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="centraleModal" tabindex="-1" aria-labelledby="centraleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered px-3"> 
+            <div class="modal-content border-0 shadow rounded-4">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="centraleModalLabel">Centrale Operativa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form method="post" id="loginCentrale" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        
+                        <input type="hidden" name="username" value="centrale_operativa">
+
+                        <div class="form-floating mb-3">
+                            <input type="password" name="password" class="form-control" id="centrale_password" placeholder="Password" required>
+                            <label for="centrale_password">Password</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Accedi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

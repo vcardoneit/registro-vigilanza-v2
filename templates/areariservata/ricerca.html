@@ -1,0 +1,139 @@
+{% extends 'areariservata/base.html' %}
+{% load static %}
+
+{% block title %}Ricerca Storico - Vigilanza{% endblock %}
+{% block page_title %}Ricerca Storico{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-sliders text-primary"></i> Filtri di Ricerca</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" action="{% url 'ricerca' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="data_type" class="form-label small fw-bold text-muted">Tipo Dati</label>
+                            <select class="form-select" id="data_type" name="data_type">
+                                <option value="all" {% if data_type == "all" or not data_type %}selected{% endif %}>Tutto</option>
+                                <option value="accessi" {% if data_type == "accessi" %}selected{% endif %}>Personale esterno</option>
+                                <option value="turni" {% if data_type == "turni" %}selected{% endif %}>Lista turni</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="start_date" class="form-label small fw-bold text-muted">Data Inizio</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="end_date" class="form-label small fw-bold text-muted">Data Fine</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="custode" class="form-label small fw-bold text-muted">Custode</label>
+                            <select class="form-select" id="custode" name="custode">
+                                <option value="tutti" {% if not custode %}selected{% endif %}>Tutti</option>
+                                {% for custodeList in custodi %}
+                                    <option value="{{ custodeList }}" {% if custodeList.username == custode %}selected{% endif %}>{{ custodeList.get_full_name|default:custodeList }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary-custom px-4 rounded-3">
+                                <i class="bi bi-search me-2"></i>Cerca
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if turni or accessi %}
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-table text-success"></i> Risultati</p>
+                <form method="post" action="" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="data_type" value="{{ data_type }}">
+                    <input type="hidden" name="start_date" value="{{ start_date }}">
+                    <input type="hidden" name="end_date" value="{{ end_date }}">
+                    <input type="hidden" name="custode" value="{{ custode }}">
+                    <button type="submit" name="generaPdf" class="btn btn-sm btn-outline-danger rounded-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-pdf"></i> Genera PDF
+                    </button>
+                </form>
+            </div>
+
+            {% if turni %}
+            <div class="p-3 border-bottom card-title-custom">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Lista Turni</h6>
+            </div>
+            <div class="table-responsive mb-0">
+                <table class="table table-custom mb-0">
+                    <thead>
+                        <tr><th>Data</th><th>Custode</th><th>Inizio Turno</th><th>Fine Turno</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for turno in turni %}
+                        <tr class="nrm">
+                            <td class="fw-bold">{{ turno.data }}</td>
+                            <td>{{ turno.vigilante.get_full_name }}</td>
+                            <td>{{ turno.orario_inizio|date:"H:i" }}</td>
+                            <td>{% if turno.orario_fine %}{{ turno.orario_fine|date:"H:i" }}{% else %}-{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% if accessi %}
+            <div class="p-3 border-bottom border-top mt-0 card-title-custom">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-people me-2"></i>Personale Esterno</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom mb-0">
+                    <thead>
+                        <tr><th>Data</th><th>Custode</th><th>Nominativi</th><th>Ditta</th><th>Ora Ingresso</th><th>Ora Uscita</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for accesso in accessi %}
+                        <tr class="nrm">
+                            <td class="fw-bold">{{ accesso.turno.data }}</td>
+                            <td>{{ accesso.turno.vigilante.get_full_name }}</td>
+                            <td>{{ accesso.nominativi }}</td>
+                            <td>{{ accesso.ditta }}</td>
+                            <td>{{ accesso.oraIngresso|date:"H:i" }}</td>
+                            <td>{{ accesso.oraUscita|date:"H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not turni and not accessi and request.method == 'POST' %}
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom text-center py-5 theme-empty-state">
+            <div class="card-body">
+                <i class="bi bi-search text-muted" style="font-size: 2.5rem;"></i>
+                <h5 class="mt-3 text-muted">Nessun risultato trovato</h5>
+                <p class="text-muted small mb-0">Prova a modificare i filtri di ricerca.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

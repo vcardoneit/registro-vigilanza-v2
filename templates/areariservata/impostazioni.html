@@ -1,0 +1,61 @@
+{% extends 'areariservata/base.html' %}
+{% load static %}
+
+{% block title %}Impostazioni - Vigilanza{% endblock %}
+{% block page_title %}Impostazioni{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom">
+                    <i class="bi bi-telegram" style="color: #24A1DE;"></i> Configurazione Telegram
+                </p>
+            </div>
+            
+            <div class="p-4">
+                <form method="post" action=""> {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="bot_token" class="form-label">TELEGRAM_BOT_TOKEN</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-key text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="bot_token" name="telegram_bot_token" 
+                                   value="{{ telegram_bot_token|default:'' }}" 
+                                   placeholder="123456789:ABCdefGhIJKlmNoPQRstUvwxyz" required>
+                        </div>
+                        <div class="form-text mt-1">
+                            Il token univoco fornito da <a href="https://t.me/BotFather" target="_blank" class="text-decoration-none">@BotFather</a>.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="chat_id" class="form-label">TELEGRAM_CHAT_ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-chat-dots text-muted"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="chat_id" name="telegram_chat_id" 
+                                   value="{{ telegram_chat_id|default:'' }}" 
+                                   placeholder="-100123456789" required>
+                        </div>
+                        <div class="form-text mt-1">
+                            L'ID numerico della chat o del gruppo dove verranno inviate le notifiche.
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-light border fw-medium" onclick="window.location.reload()">
+                            Annulla
+                        </button>
+                        <button type="submit" class="btn btn-primary-custom px-4 shadow-sm">
+                            <i class="bi bi-save me-1"></i> Salva Modifiche
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

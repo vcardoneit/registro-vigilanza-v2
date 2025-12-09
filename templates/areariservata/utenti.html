@@ -1,0 +1,300 @@
+{% extends 'areariservata/base.html' %}
+{% load static %}
+
+{% block title %}Utenti - Vigilanza{% endblock %}
+{% block page_title %}Utenti{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-action-edit { background-color: #e0e7ff; color: #4338ca; border: none; }
+    .btn-action-delete { background-color: #fee2e2; color: #b91c1c; border: none; }
+    [data-bs-theme="dark"] .btn-action-edit { background-color: #312e81; color: #c7d2fe; }
+    [data-bs-theme="dark"] .btn-action-delete { background-color: #450a0a; color: #fca5a5; }
+    [data-bs-theme="dark"] .bg-success-subtle { background-color: rgba(6, 78, 59, 0.5) !important; color: #6ee7b7 !important; border-color: #064e3b !important; }
+    [data-bs-theme="dark"] .bg-secondary-subtle { background-color: #374151 !important; color: #d1d5db !important; border-color: #4b5563 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-person-badge text-primary"></i> Vigilanti</p>
+                <button class="btn btn-primary-custom btn-sm rounded-2 px-3 ms-auto" data-bs-toggle="modal" data-bs-target="#vigilanteModal" onclick="prepareVigilanteModal('add')">
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Aggiungi</span>
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Nome Utente</th>
+                            <th>Nome e Cognome</th>
+                            <th>Stato</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in vigilanti %}
+                        <tr>
+                            <td class="fw-bold">{{ v.username }}</td>
+                            <td>{{ v.first_name }} {{ v.last_name }}</td>
+                            <td>
+                                {% if v.is_active %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Attivo</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill">Inattivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <button class="btn btn-action-edit btn-sm rounded-2 me-1" 
+                                        data-bs-toggle="modal" data-bs-target="#vigilanteModal"
+                                        onclick="prepareVigilanteModal('edit', '{{ v.id }}', '{{ v.username }}', '{{ v.first_name }}', '{{ v.last_name }}')">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <button class="btn btn-action-delete btn-sm rounded-2" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteVigilanteModal"
+                                        onclick="setDeleteVigilante('{{ v.id }}', '{{ v.username }}')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-4 text-muted fst-italic">Nessun vigilante presente</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-building text-info"></i> Personale INAF</p>
+                <button class="btn btn-primary-custom btn-sm rounded-2 px-3 ms-auto" data-bs-toggle="modal" data-bs-target="#inafModal" onclick="prepareInafModal('add')">
+                    <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Aggiungi</span>
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom mb-0 text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>Nome Utente INAF</th>
+                            <th class="text-end">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in personaleINAF %}
+                        <tr>
+                            <td class="fw-bold">{{ p.nominativo }}</td>
+                            <td>{% if p.nomeutente %}<code>{{ p.nomeutente }}</code>{% else %}<span class="text-muted small fst-italic">- Nessuno -</span>{% endif %}</td>
+                            <td class="text-end">
+                                <button class="btn btn-action-edit btn-sm rounded-2 me-1" 
+                                        data-bs-toggle="modal" data-bs-target="#inafModal"
+                                        onclick="prepareInafModal('edit', '{{ p.id }}', '{{ p.nominativo }}', '{% if p.nomeutente %}{{ p.nomeutente }}{% else %}{% endif %}')">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </button>
+                                <button class="btn btn-action-delete btn-sm rounded-2" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteInafModal"
+                                        onclick="setDeleteInaf('{{ p.id }}', '{{ p.nominativo }}')">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-4 text-muted fst-italic">Nessun personale registrato</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="vigilanteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="vigilanteForm" action="{% url 'aggiungiVigilante' %}"> 
+                {% csrf_token %}
+                <input type="hidden" name="vigilante_id" id="vigilante_id">
+                <input type="hidden" name="action_type" id="vigilante_action_type" value="add">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="vigilanteModalLabel">Nuovo Vigilante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="v_username" class="form-label small fw-bold text-muted">Nome Utente</label>
+                        <input type="text" class="form-control" id="v_username" name="username" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="v_firstname" class="form-label small fw-bold text-muted">Nome</label>
+                            <input type="text" class="form-control" id="v_firstname" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="v_lastname" class="form-label small fw-bold text-muted">Cognome</label>
+                            <input type="text" class="form-control" id="v_lastname" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label for="v_password" class="form-label small fw-bold text-muted">Password</label>
+                        <input type="password" class="form-control" id="v_password" name="password" placeholder="Lascia vuoto per mantenere attuale">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary-custom">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteVigilanteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="vigilante_id" id="delete_vigilante_id">
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-exclamation-circle text-danger mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="mb-2 fw-bold">Sei sicuro?</h5>
+                    <p class="text-muted small mb-4">Eliminare il vigilante <strong id="delete_vigilante_name"></strong>?</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light border w-50" data-bs-dismiss="modal">No</button>
+                        <button type="submit" class="btn btn-danger w-50">Elimina</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="inafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="inafForm" action="">
+                {% csrf_token %}
+                <input type="hidden" name="inaf_id" id="inaf_id">
+                <input type="hidden" name="action_type" id="inaf_action_type" value="add">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="inafModalLabel">Personale INAF</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="i_nome" class="form-label small fw-bold text-muted">Nome Completo</label>
+                        <input type="text" class="form-control" id="i_nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="i_user" class="form-label small fw-bold text-muted">Nome Utente INAF</label>
+                        <input type="text" class="form-control" id="i_user" name="associated_username" placeholder="Es. mario.rossi">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary-custom">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteInafModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form method="post" action="">
+                {% csrf_token %}
+                <input type="hidden" name="inaf_id" id="delete_inaf_id">
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-trash text-danger mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="mb-2 fw-bold">Eliminare?</h5>
+                    <p class="text-muted small mb-4">Rimuovere <strong id="delete_inaf_name"></strong>?</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light border w-50" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-danger w-50">Sì</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function prepareVigilanteModal(mode, id = '', username = '', first = '', last = '') {
+        const modalLabel = document.getElementById('vigilanteModalLabel');
+        const idInput = document.getElementById('vigilante_id');
+        const actionInput = document.getElementById('vigilante_action_type');
+        const uInput = document.getElementById('v_username');
+        const fInput = document.getElementById('v_firstname');
+        const lInput = document.getElementById('v_lastname');
+        const pInput = document.getElementById('v_password');
+
+        if (mode === 'edit') {
+            modalLabel.innerText = 'Modifica Vigilante';
+            actionInput.value = 'edit';
+            idInput.value = id;
+            uInput.value = username;
+            fInput.value = first;
+            lInput.value = last;
+            pInput.required = false; 
+            document.getElementById('vigilanteForm').action = "{% url 'modificaVigilante' vigilante_id=0 %}".replace('0', id);
+        } else {
+            modalLabel.innerText = 'Nuovo Vigilante';
+            actionInput.value = 'add';
+            idInput.value = '';
+            uInput.value = '';
+            fInput.value = '';
+            lInput.value = '';
+            pInput.value = '';
+            pInput.required = true; 
+        }
+    }
+
+    function setDeleteVigilante(id, username) {
+        document.getElementById('delete_vigilante_id').value = id;
+        document.getElementById('delete_vigilante_name').innerText = username;
+        document.getElementById('deleteVigilanteModal').querySelector('form').action = "{% url 'rimuoviVigilante' vigilante_id=0 %}".replace('0', id);
+    }
+
+    function prepareInafModal(mode, id = '', nome = '', user = '') {
+        const modalLabel = document.getElementById('inafModalLabel');
+        const idInput = document.getElementById('inaf_id');
+        const actionInput = document.getElementById('inaf_action_type');
+        const nInput = document.getElementById('i_nome');
+        const uInput = document.getElementById('i_user');
+
+        if (mode === 'edit') {
+            modalLabel.innerText = 'Modifica Personale';
+            actionInput.value = 'edit';
+            idInput.value = id;
+            nInput.value = nome;
+            uInput.value = user;
+            document.getElementById('inafForm').action = "{% url 'modificaPersonaleINAF' personale_id=0 %}".replace('0', id);
+        } else {
+            modalLabel.innerText = 'Nuovo Personale';
+            actionInput.value = 'add';
+            idInput.value = '';
+            nInput.value = '';
+            uInput.value = '';
+            document.getElementById('inafForm').action = "{% url 'aggiungiPersonaleINAF' %}";
+        }
+    }
+
+    function setDeleteInaf(id, nome) {
+        document.getElementById('delete_inaf_id').value = id;
+        document.getElementById('deleteInafModal').querySelector('form').action = "{% url 'rimuoviPersonaleINAF' personale_id=0 %}".replace('0', id);
+        document.getElementById('delete_inaf_name').innerText = nome;
+    }
+</script>
+{% endblock %}

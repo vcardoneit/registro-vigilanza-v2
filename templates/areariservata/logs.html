@@ -1,0 +1,219 @@
+{% extends 'areariservata/base.html' %}
+{% load static %}
+
+{% block title %}Logs - Vigilanza{% endblock %}
+{% block page_title %}Logs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .log-message { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85rem; word-break: break-word; }
+    .btn-action-custom { background-color: white; border: 1px solid #dee2e6; color: #4f46e5; font-weight: 500; }
+    .btn-action-custom:hover { background-color: #f8f9fa; color: #4338ca; }
+    [data-bs-theme="dark"] .btn-action-custom { background-color: #2d2d2d; border-color: #404040; color: #818cf8; }
+</style>
+{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-action-custom shadow-sm d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#exportModal">
+    <i class="bi bi-cloud-download"></i> <span class="d-none d-sm-inline">Esporta</span>
+</button>
+{% endblock %}
+
+{% block header_extra %}
+<div class="d-flex align-items-center gap-2 m-0 bg-white p-2 rounded-3 shadow-sm border border-0 theme-date-container" style="flex-grow: 1; max-width: 100%; min-width: 200px;">
+    <i class="bi bi-search text-muted ms-1"></i>
+    <input type="text" id="searchInput" class="form-control form-control-sm border-0 bg-light shadow-none" placeholder="Cerca..." style="min-width: 150px;">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <div class="d-flex align-items-center gap-2">
+                    <p class="card-title-custom"><i class="bi bi-hdd-stack text-secondary"></i> <span class="d-none d-sm-inline">Elenco Completo</span><span class="d-inline d-sm-none">Elenco</span></p>
+                    <span class="badge bg-light text-dark border">{{ logs|length }}</span>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <label for="rowsPerPage" class="small text-muted fw-bold d-none d-md-block">Mostra:</label>
+                    <select id="rowsPerPage" class="form-select form-select-sm border-light bg-light shadow-sm" style="width: auto; cursor: pointer;">
+                        <option value="15" selected>15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="all">Tutti</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-custom mb-0" id="tableLogs">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 160px;">Data</th>
+                            <th>Utente</th>
+                            <th>Azione</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="nrm">
+                            <td class="fw-bold text-nowrap" style="color: #6b7280;">{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                            <td><span class="log-message fw-semibold text-primary">{{ log.utente }}</span></td>
+                            <td><span class="log-message text-break">{{ log.azione }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-3 py-2 border-top bg-light d-flex justify-content-center justify-content-md-end align-items-center" id="paginationContainer" style="display: none;">
+                <nav aria-label="Navigazione tabella">
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+            {% else %}
+            <div class="text-center py-5 bg-white theme-empty-state">
+                <i class="bi bi-journal-x text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 small">Nessun log trovato.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold">Esporta Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form action="{% url 'esportaLogs' %}" method="POST"> 
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">Filtra per utente e intervallo temporale per scaricare il CSV.</p>
+                    
+                    <div class="mb-3">
+                        <label for="user_select" class="form-label small fw-bold text-muted text-uppercase">Utente</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-person"></i></span>
+                            <select class="form-select border-start-0 ps-0" id="user_select" name="user_select">
+                                <option value="all" selected>Tutti gli utenti</option>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}">{{ u.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_start" class="form-label small fw-bold text-muted text-uppercase">Data Inizio</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-calendar-event"></i></span>
+                            <input type="datetime-local" class="form-control border-start-0 ps-0" id="date_start" name="date_start" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_end" class="form-label small fw-bold text-muted text-uppercase">Data Fine</label>
+                        <div class="input-group">
+                            <span class="input-group-text border-end-0"><i class="bi bi-calendar-check"></i></span>
+                            <input type="datetime-local" class="form-control border-start-0 ps-0" id="date_end" name="date_end" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light text-muted fw-medium" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary-custom px-4">
+                        <i class="bi bi-download me-2"></i> CSV
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('tableLogs');
+        const searchInput = document.getElementById('searchInput');
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        let currentRows = [...allRows]; 
+        const rowsPerPageSelect = document.getElementById('rowsPerPage');
+        const paginationContainer = document.getElementById('paginationContainer');
+        const paginationControls = document.getElementById('paginationControls');
+
+        let currentPage = 1;
+        let rowsPerPage = 15;
+
+        function filterRows() {
+            const query = searchInput.value.toLowerCase().trim();
+            currentRows = query === "" ? [...allRows] : allRows.filter(row => row.textContent.toLowerCase().includes(query));
+            currentPage = 1;
+            updateState();
+        }
+
+        searchInput.addEventListener('input', filterRows);
+
+        function displayRows() {
+            allRows.forEach(row => row.style.display = 'none');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            currentRows.forEach((row, index) => {
+                if (rowsPerPage === 'all' || (index >= start && index < end)) {
+                    row.style.display = '';
+                }
+            });
+        }
+
+        function setupPagination() {
+            paginationControls.innerHTML = '';
+            const pageCount = Math.ceil(currentRows.length / rowsPerPage);
+
+            if (rowsPerPage === 'all' || currentRows.length === 0 || pageCount <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            paginationContainer.style.display = 'flex';
+
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#">&laquo;</a>`;
+            prevLi.onclick = (e) => { e.preventDefault(); if(currentPage > 1) { currentPage--; updateState(); }};
+            paginationControls.appendChild(prevLi);
+
+            const currLi = document.createElement('li');
+            currLi.className = 'page-item active';
+            currLi.innerHTML = `<span class="page-link">${currentPage} / ${pageCount}</span>`;
+            paginationControls.appendChild(currLi);
+
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#">&raquo;</a>`;
+            nextLi.onclick = (e) => { e.preventDefault(); if(currentPage < pageCount) { currentPage++; updateState(); }};
+            paginationControls.appendChild(nextLi);
+        }
+
+        function updateState() { displayRows(); setupPagination(); }
+
+        rowsPerPageSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            rowsPerPage = selectedValue === 'all' ? 'all' : parseInt(selectedValue);
+            currentPage = 1; 
+            updateState();
+        });
+
+        if(allRows.length > 0) updateState();
+    });
+</script>
+{% endblock %}

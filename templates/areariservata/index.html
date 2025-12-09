@@ -1,0 +1,278 @@
+{% extends 'areariservata/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Vigilanza{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block header_extra %}
+<form method="post" action="" class="d-flex align-items-center gap-2 m-0 bg-white p-2 rounded-3 shadow-sm w-sm-100 border border-0 theme-date-container">
+    {% csrf_token %}
+    <label for="data" class="form-label mb-0 fw-bold text-secondary px-2 d-none d-md-block">Data:</label>
+    <input type="date" id="data" name="data" class="form-control form-control-sm border-0 bg-light" value="{{ data|date:'Y-m-d' }}" style="min-width: 130px;">
+    <button type="submit" class="btn btn-primary-custom btn-sm rounded-2 px-3">
+        <i class="bi bi-arrow-clockwise"></i>
+    </button>
+</form>
+{% endblock %}
+
+{% block content %}
+<style>
+    .status-badge {
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    .status-badge.active { background-color: #dcfce7; color: #166534; }
+    .status-badge.inactive { background-color: #f3f4f6; color: #4b5563; }
+    .status-badge.ongoing { background-color: #dbeafe; color: #1e40af; }
+    
+    [data-bs-theme="dark"] .status-badge.active { background-color: #064e3b; color: #6ee7b7; }
+    [data-bs-theme="dark"] .status-badge.inactive { background-color: #374151; color: #d1d5db; }
+    [data-bs-theme="dark"] .status-badge.ongoing { background-color: #1e3a8a; color: #93c5fd; }
+    [data-bs-theme="dark"] .list-group-item { background-color: #1e1e1e; color: #e5e5e5; border-color: #2d2d2d; }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <div class="d-flex align-items-center gap-2">
+                    <p class="card-title-custom"><i class="bi bi-people-fill text-primary"></i> Personale esterno</p>
+                    <span class="badge bg-light text-dark border">{{ accessi|length }}</span>
+                </div>
+                
+                <div class="d-flex align-items-center gap-2">
+                    <label for="rowsPerPage" class="small text-muted fw-bold d-none d-sm-block">Mostra:</label>
+                    <select id="rowsPerPage" class="form-select form-select-sm border-light bg-light shadow-sm" style="width: auto; cursor: pointer;">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="all">Tutti</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if accessi %}
+            <div class="table-responsive">
+                <table class="table table-custom mb-0" id="tableAccessi">
+                    <thead>
+                        <tr>
+                            <th>Custode</th>
+                            <th>Nominativi</th>
+                            <th>Ditta</th>
+                            <th>Ingresso</th>
+                            <th>Uscita</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for accesso in accessi %}
+                        <tr class="{% if accesso.oraIngresso|date:"Y-m-d" != data|date:"Y-m-d" %}dsb{% elif accesso.oraUscita %}nrm{% else %}prs{% endif %}">
+                            <td class="fw-bold">{{ accesso.turno.vigilante.get_full_name|default:accesso.turno.vigilante.username }}</td>
+                            <td>{{ accesso.nominativi }}</td>
+                            <td>{{ accesso.ditta }}</td>
+                            <td>{{ accesso.oraIngresso|date:"H:i" }}</td>
+                            <td>
+                                {% if accesso.oraUscita %} 
+                                    {{ accesso.oraUscita|date:"H:i" }} 
+                                {% else %} 
+                                    <span class="status-badge active">Presente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-3 py-2 border-top bg-light d-flex justify-content-end align-items-center" id="paginationContainer" style="display: none;">
+                <nav aria-label="Navigazione tabella">
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+                </nav>
+            </div>
+            {% else %}
+            <div class="text-center py-5 bg-white theme-empty-state">
+                <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 small">Nessun accesso registrato</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-clock-history text-success"></i> Turni</p>
+            </div>
+            {% if turni %}
+            <div class="table-responsive">
+                <table class="table table-custom mb-0">
+                    <thead>
+                        <tr>
+                            <th>Custode</th>
+                            <th>Inizio</th>
+                            <th>Fine</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for turno in turni %}
+                        <tr class="{% if turno.orario_inizio|date:"Y-m-d" != data|date:"Y-m-d" %}dsb{% elif turno.orario_fine %}nrm{% else %}prs{% endif %}">
+                            <td class="fw-bold">{{ turno.vigilante.get_full_name|default:turno.vigilante.username }}</td>
+                            <td>{{ turno.orario_inizio|date:"H:i" }}</td>
+                            <td>{% if turno.orario_fine %}{{ turno.orario_fine|date:"H:i" }}{% else %}-{% endif %}</td>
+                            <td>
+                                {% if not turno.orario_fine %}
+                                    <span class="status-badge ongoing">In Corso</span>
+                                {% else %}
+                                    <span class="status-badge inactive">Terminato</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 bg-white theme-empty-state">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 small">Nessun turno registrato</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 d-flex">
+        <div class="card-custom w-100 d-flex flex-column">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-journal-text text-warning"></i> Note</p>
+            </div>
+            <div class="p-4 flex-grow-1">
+                {% if note %}
+                <textarea class="form-control" id="note" name="note" rows="8" placeholder="Annotazioni turno..." disabled>{{ note }}</textarea>
+                {% else %}
+                <p class="text-muted fst-italic m-0 small">Nessuna nota per questa data.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 d-flex">
+        <div class="card-custom w-100 d-flex flex-column">
+            <div class="card-header-custom">
+                <p class="card-title-custom"><i class="bi bi-building text-info"></i> Personale INAF</p>
+            </div>
+            <div class="p-0 flex-grow-1">
+                {% if personale %}
+                <ul class="list-group list-group-flush">
+                    {% for p in personale %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                        <span class="fw-500">{{ p.personale.nominativo }}</span>
+                        {% if p.is_present %}
+                        <span class="status-badge active">Presente</span>
+                        {% else %}
+                        <span class="status-badge inactive">Uscito</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-4 text-muted fst-italic small">Nessun personale registrato.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end pb-4">
+    <form method="post" action="{% url 'generaPDF' %}" class="w-100 w-md-auto">
+        {% csrf_token %}
+        <input type="hidden" name="data" value="{{ data|date:'Y-m-d' }}">
+        <button type="submit" class="btn btn-dark shadow-sm px-4 py-3 py-md-2 rounded-3 w-100 w-md-auto">
+            <i class="bi bi-file-earmark-pdf-fill me-2"></i>Genera PDF
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('tableAccessi');
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rowsPerPageSelect = document.getElementById('rowsPerPage');
+        const paginationContainer = document.getElementById('paginationContainer');
+        const paginationControls = document.getElementById('paginationControls');
+
+        let currentPage = 1;
+        let rowsPerPage = 5;
+
+        function displayRows() {
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+                if (rowsPerPage === 'all') {
+                    row.style.display = '';
+                } else {
+                    row.style.display = (index >= start && index < end) ? '' : 'none';
+                }
+            });
+        }
+
+        function setupPagination() {
+            paginationControls.innerHTML = '';
+            
+            if (rowsPerPage === 'all' || rows.length === 0) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            const pageCount = Math.ceil(rows.length / rowsPerPage);
+            if (pageCount <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            } 
+            
+            paginationContainer.style.display = 'flex';
+            paginationContainer.classList.add('d-flex');
+
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<a class="page-link" href="#">&laquo;</a>`;
+            prevLi.onclick = (e) => { e.preventDefault(); if(currentPage > 1) { currentPage--; updateState(); }};
+            paginationControls.appendChild(prevLi);
+
+            for (let i = 1; i <= pageCount; i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${currentPage === i ? 'active' : ''}`;
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.onclick = (e) => { e.preventDefault(); currentPage = i; updateState(); };
+                paginationControls.appendChild(li);
+            }
+
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<a class="page-link" href="#">&raquo;</a>`;
+            nextLi.onclick = (e) => { e.preventDefault(); if(currentPage < pageCount) { currentPage++; updateState(); }};
+            paginationControls.appendChild(nextLi);
+        }
+
+        function updateState() { displayRows(); setupPagination(); }
+
+        rowsPerPageSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            rowsPerPage = selectedValue === 'all' ? 'all' : parseInt(selectedValue);
+            currentPage = 1; 
+            updateState();
+        });
+
+        if(rows.length > 0) updateState();
+    });
+</script>
+{% endblock %}
