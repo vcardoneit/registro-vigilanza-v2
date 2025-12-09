@@ -418,15 +418,25 @@
                 </div>
 
                 <div class="card-custom p-3">
-                    <div class="row">
-                        <div class="col-12">
-                            <label class="section-label mb-1 lh-1">ULTIMA MARCATURA</label>
+                    <div class="row g-2"> <div class="col-6">
+                            <label class="section-label mb-1 lh-1">ULTIMA</label>
                             <input type="text" class="form-control text-center fw-bold" 
                                 value="{% if ultimaMarcatura %}{{ ultimaMarcatura.orario|date:'H:i' }}{% else %}-{% endif %}" 
                                 disabled 
                                 title="Orario ultima marcatura"
                                 id="ultima_marcatura">
                         </div>
+
+                        <div class="col-6">
+                            <label class="section-label mb-1 lh-1 text-primary">PROSSIMA</label>
+                            <input type="text" class="form-control text-center fw-bold" 
+                                value="--:--" 
+                                disabled 
+                                style="color: var(--primary-color); border-color: var(--primary-color);"
+                                title="Orario prossima marcatura prevista"
+                                id="prossima_marcatura">
+                        </div>
+
                         <div class="col-12 mt-3">
                             <form method="post" action=""> 
                                 {% csrf_token %}
@@ -653,6 +663,7 @@
 
         function checkDeadline(now) {
             const lastMarkInput = document.getElementById('ultima_marcatura');
+            const nextMarkInput = document.getElementById('prossima_marcatura');
             const btnMarcatura = document.getElementById('btnMarcatura');
             
             if (!lastMarkInput || !btnMarcatura) return;
@@ -660,6 +671,7 @@
             const lastMarkStr = lastMarkInput.value.trim();
             
             if (!lastMarkStr || lastMarkStr === '-' || lastMarkStr.indexOf(':') === -1) {
+                if(nextMarkInput) nextMarkInput.value = "--:--";
                 return;
             }
 
@@ -671,6 +683,11 @@
             }
 
             const deadlineDate = new Date(lastMarkDate.getTime() + 60 * 60 * 1000);
+            
+            if(nextMarkInput) {
+                nextMarkInput.value = deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+
             const diffMs = deadlineDate - now;
             const minutesLeft = Math.floor(diffMs / 1000 / 60);
 
@@ -683,10 +700,10 @@
                     alertState = 'urgent';
                 }
             } 
-            else if (minutesLeft <= 10) {
+            else if (minutesLeft <= 15) {
                 btnMarcatura.classList.add('btn-warning-custom');
                 if (alertState !== 'warning') {
-                    alert(`ℹ️ AVVISO\n\nProssima marcatura prevista per le: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano 10 minuti)`);
+                    alert(`ℹ️ AVVISO\n\nProssima marcatura prevista per le: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano 15 minuti)`);
                     alertState = 'warning';
                 }
             } 
