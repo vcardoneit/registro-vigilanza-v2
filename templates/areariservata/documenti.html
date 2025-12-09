@@ -86,6 +86,14 @@
                                                         </button>
                                                     </h2>
                                                     <div id="collapse{{ year.grouper }}-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionMonths{{ year.grouper }}">
+                                                        
+                                                        <div class="bg-light p-2 border-bottom d-flex justify-content-end align-items-center">
+                                                            <a href="{% url 'generaReportMensile' year=month.list.0.data_riferimento|date:'Y' month=month.list.0.data_riferimento|date:'m' %}" 
+                                                            class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2 shadow-sm">
+                                                             <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                                                                Genera Report Mensile
+                                                            </a>
+                                                        </div>
                                                         <div class="table-responsive">
                                                             <table class="table table-custom mb-0 align-middle">
                                                                 <thead>
@@ -100,14 +108,30 @@
                                                                     <tr class="nrm">
                                                                         <td>
                                                                             <div class="d-flex align-items-center">
-                                                                                <div class="file-icon pdf"><i class="bi bi-file-earmark-pdf"></i></div>
+                                                                                <div class="file-icon pdf">
+                                                                                    {% if report.is_monthly %}
+                                                                                        <i class="bi bi-collection-fill"></i> 
+                                                                                    {% else %}
+                                                                                        <i class="bi bi-file-earmark-pdf"></i>
+                                                                                    {% endif %}
+                                                                                </div>
                                                                                 <div>
-                                                                                    <span class="fw-bold d-block">Report_{{ report.data_riferimento|date:"d_m_Y" }}.pdf</span>
+                                                                                    <span class="fw-bold d-block">
+                                                                                        {% if report.is_monthly %}
+                                                                                            Report mensile
+                                                                                        {% else %}
+                                                                                            Report giornaliero
+                                                                                        {% endif %}
+                                                                                    </span>
                                                                                     <small class="text-muted">Caricato il: {{ report.creato_il|date:"d/m/Y" }}</small>
                                                                                 </div>
                                                                             </div>
                                                                         </td>
+                                                                        {% if report.is_monthly %}
+                                                                        <td>Mensile - {{ report.data_riferimento|date:"F Y" }}</td>
+                                                                        {% else %}
                                                                         <td>{{ report.data_riferimento|date:"l d F Y" }}</td>
+                                                                        {% endif %}
                                                                         <td class="text-end">
                                                                             {% if report.pdf %}
                                                                             <a href="{{ report.pdf.url }}" class="btn btn-sm btn-light border shadow-sm" target="_blank" title="Scarica PDF">

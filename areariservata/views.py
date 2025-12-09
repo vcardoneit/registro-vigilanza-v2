@@ -1,8 +1,12 @@
+import calendar
+from datetime import date
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
 from django.contrib.admin.views.decorators import staff_member_required
-from core.models import Accesso, TurnoVigilanza, Presenza, RegistroGiornaliero, Impostazioni, Log, PersonaleINAF, ReportGiornaliero, Fattura, Turni
+from django.core.files.base import ContentFile
+from core.models import *
 from django.contrib.auth.models import User
 import csv
 from django.http import HttpResponse
@@ -78,11 +82,11 @@ def aggiungiPersonaleINAF(request):
         nomeutenteInaf = request.POST.get("associated_username")
         
         if PersonaleINAF.objects.filter(nominativo=nome_completo).exists():
-            messages.error(request, "Esiste già un utente INAF con questo nome completo.")
+            messages.warning(request, "Esiste già un utente INAF con questo nome completo.")
             return redirect("/utenti/")
 
         if nomeutenteInaf and PersonaleINAF.objects.filter(nomeutente=nomeutenteInaf).exists():
-            messages.error(request, "Esiste già un utente INAF con questo nome utente INAF.")
+            messages.warning(request, "Esiste già un utente INAF con questo nome utente INAF.")
             return redirect("/utenti/")
 
         PersonaleINAF.objects.create(
@@ -105,7 +109,7 @@ def rimuoviPersonaleINAF(request, personale_id):
             log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Eliminato utente INAF: {personale.nominativo}")
             log.save()
         except PersonaleINAF.DoesNotExist:
-            messages.error(request, "Utente INAF non trovato.")
+            messages.warning(request, "Utente INAF non trovato.")
         return redirect("/utenti/")
     else:
         return redirect("/")
@@ -118,15 +122,15 @@ def modificaPersonaleINAF(request, personale_id):
         try:
             personale = PersonaleINAF.objects.get(id=personale_id)
         except PersonaleINAF.DoesNotExist:
-            messages.error(request, "Utente INAF non trovato.")
+            messages.warning(request, "Utente INAF non trovato.")
             return redirect("/utenti/")
 
         if PersonaleINAF.objects.filter(nominativo=nome_completo).exclude(id=personale_id).exists():
-            messages.error(request, "Esiste già un utente INAF con questo nome completo.")
+            messages.warning(request, "Esiste già un utente INAF con questo nome completo.")
             return redirect("/utenti/")
 
         if nomeutenteInaf and PersonaleINAF.objects.filter(nomeutente=nomeutenteInaf).exclude(id=personale_id).exists():
-            messages.error(request, "Esiste già un utente INAF con questo nome utente INAF.")
+            messages.warning(request, "Esiste già un utente INAF con questo nome utente INAF.")
             return redirect("/utenti/")
 
         personale.nominativo = nome_completo
@@ -153,7 +157,7 @@ def aggiungiVigilante(request):
         password = request.POST.get("password")
         
         if User.objects.filter(username=username).exists():
-            messages.error(request, "Esiste già un vigilante con questo username.")
+            messages.warning(request, "Esiste già un vigilante con questo username.")
             return redirect("/utenti/")
 
         User.objects.create_user(username=username, password=password, first_name=firstname, last_name=lastname, is_staff=False)
@@ -173,7 +177,7 @@ def rimuoviVigilante(request, vigilante_id):
             log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Eliminato vigilante: {vigilante.username}")
             log.save()
         except User.DoesNotExist:
-            messages.error(request, "Vigilante non trovato.")
+            messages.warning(request, "Vigilante non trovato.")
         return redirect("/utenti/")
     else:
         return redirect("/utenti/")
@@ -188,11 +192,11 @@ def modificaVigilante(request, vigilante_id):
         try:
             vigilante = User.objects.get(id=vigilante_id, is_staff=False)
         except User.DoesNotExist:
-            messages.error(request, "Vigilante non trovato.")
+            messages.warning(request, "Vigilante non trovato.")
             return redirect("/utenti/")
 
         if User.objects.filter(username=username).exclude(id=vigilante_id).exists():
-            messages.error(request, "Esiste già un vigilante con questo username.")
+            messages.warning(request, "Esiste già un vigilante con questo username.")
             return redirect("/utenti/")
 
         vigilante.username = username
@@ -274,10 +278,15 @@ def documenti(request):
             messages.success(request, "Documento turno caricato con successo.")
             Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=f"Caricato documento turni {documento.name}")
         else:
-            messages.error(request, "Tipo di documento non valido.")
+            messages.warning(request, "Tipo di documento non valido.")
 
         return redirect("/documenti/")
-    reports = ReportGiornaliero.objects.all().order_by('-data_riferimento')
+    report_Giornalieri = ReportGiornaliero.objects.all().order_by('-data_riferimento')
+    report_Mensili = ReportMensile.objects.all().order_by('-data_riferimento')
+    reports = sorted(
+        list(report_Giornalieri) + list(report_Mensili),
+        key=lambda x: x.data_riferimento, reverse=True
+    )
     fatture = Fattura.objects.all().order_by('-data_riferimento')
     turni = Turni.objects.all().order_by('-data_riferimento')
     return render(request, 'areariservata/documenti.html', {'reports': reports, 'fatture': fatture, 'turni': turni})
@@ -572,3 +581,63 @@ def creaReportSearch(turni=None, accessi=None, start=None, end=None):
     response = HttpResponse(pdf_buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+def generaReportMensile(request, year, month):
+    try:
+        year = int(year)
+        month = int(month)
+
+        reports = ReportGiornaliero.objects.filter(
+            data_riferimento__year=year, 
+            data_riferimento__month=month
+        ).order_by('data_riferimento')
+
+        if not reports.exists():
+            messages.warning(request, "Nessun report giornaliero trovato per il mese selezionato.")
+            return redirect("documenti")
+
+        merger = PdfWriter()
+        files_count = 0
+
+        for report in reports:
+            try:
+                if report.pdf and os.path.exists(report.pdf.path):
+                    merger.append(report.pdf.path)
+                    files_count += 1
+            except Exception as e:
+                print(f"Errore lettura file {report}: {e}")
+
+        if files_count == 0:
+            messages.warning(request, "Record trovati nel DB, ma i file PDF fisici risultano mancanti.")
+            return redirect("documenti")
+
+        output_buffer = BytesIO()
+        merger.write(output_buffer)
+        merger.close()
+        
+        output_buffer.seek(0)
+
+        last_day = calendar.monthrange(year, month)[1]
+        data_ref_mensile = date(year, month, last_day)
+        
+        month_name_eng = calendar.month_name[month]
+        filename = f"Report_Mensile_{month_name_eng}_{year}.pdf"
+
+        report_mensile, created = ReportMensile.objects.update_or_create(
+            data_riferimento=data_ref_mensile,
+            defaults={}
+        )
+
+        if report_mensile.pdf:
+            report_mensile.pdf.delete(save=False)
+            
+        report_mensile.pdf.save(filename, ContentFile(output_buffer.getvalue()), save=True)
+
+        action = "creato" if created else "aggiornato"
+        messages.success(request, f"Report mensile di {month_name_eng} {year} {action} con successo.")
+        
+        return redirect("documenti")
+
+    except Exception as e:
+        messages.warning(request, f"Errore durante la generazione del report: {str(e)}")
+        return redirect("documenti")

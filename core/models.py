@@ -145,3 +145,19 @@ class Turni(models.Model):
     
     class Meta:
         verbose_name_plural = "Programmazioni turni"
+
+# Model file report mensile (data riferimento mese, file pdf, data creazione)
+class ReportMensile(models.Model):
+    data_riferimento = models.DateField() 
+    pdf = models.FileField(upload_to='reports/mensili/%Y/')
+    creato_il = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Report Mensile {self.data_riferimento.strftime('%B %Y')}"
+
+    @property
+    def is_monthly(self):
+        return True
+    
+    class Meta:
+        verbose_name_plural = "Report mensili"

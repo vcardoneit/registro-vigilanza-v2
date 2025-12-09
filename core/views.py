@@ -77,13 +77,14 @@ def login(request):
                 return redirect('documenti')
             if user is not None:
                 auth_login(request, user)
-                turno = TurnoVigilanza.objects.create(
-                    vigilante=user,
-                    orario_inizio=timezone.now(),
-                    orario_fine=None,
-                    data=timezone.now().date()
-                )
-                turno.save()
+                if request.user.is_staff == False:
+                    turno = TurnoVigilanza.objects.create(
+                        vigilante=user,
+                        orario_inizio=timezone.now(),
+                        orario_fine=None,
+                        data=timezone.now().date()
+                    )
+                    turno.save()
                 log = Log(timestamp=timezone.now(), utente=user, azione="Login effettuato")
                 log.save()
                 return redirect('/')

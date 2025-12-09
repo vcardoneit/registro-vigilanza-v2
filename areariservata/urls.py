@@ -23,4 +23,6 @@ urlpatterns = [
     path('ricerca/', views.ricerca, name='ricerca'),
 
     path('report/genera/', views.generaPDF, name='generaPDF'),
+
+    path('reportMensile/<int:year>/<int:month>/', views.generaReportMensile, name='generaReportMensile'),
 ]
