@@ -1,23 +1,35 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-chown -R appuser:appgroup /app/media /app/staticfiles /var/log
+if [ -n "$DATABASE_HOST" ]; then
+    echo "Waiting for database at $DATABASE_HOST:${DATABASE_PORT:-5432}..."
+    timeout=30
+    while ! nc -z "$DATABASE_HOST" "${DATABASE_PORT:-5432}" 2>/dev/null; do
+        timeout=$((timeout - 1))
+        if [ $timeout -le 0 ]; then
+            echo "Database connection timeout!"
+            exit 1
+        fi
+        sleep 1
+    done
+    echo "Database is ready!"
+fi
 
-printenv > /etc/environment
+chown -R appuser:appgroup /app/media /app/staticfiles
 
 echo "Running Database Migrations..."
-su-exec appuser:appgroup python manage.py migrate --noinput
+python manage.py migrate --noinput
 
 echo "Collecting Static Files..."
-su-exec appuser:appgroup python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput --clear
 
 echo "Configuring Django crontab..."
-su-exec appuser:appgroup python manage.py crontab remove
-su-exec appuser:appgroup python manage.py crontab add
+python manage.py crontab remove || true
+python manage.py crontab add
 
 echo "Starting cron daemon..."
-crond -b -l 2 -L /var/log/cron.log
+service cron start
 
 echo "Starting Gunicorn server as user 'appuser'..."
-exec su-exec appuser:appgroup "$@"
+exec gosu appuser:appgroup "$@"
