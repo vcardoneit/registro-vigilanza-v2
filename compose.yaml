@@ -30,6 +30,7 @@ services:
          DATABASE_PORT: 5432
          REDIS_HOST: redis
          DEBUG: ${DEBUG}
+         TZ: Europe/Rome
       ports:
          - "8000:8000"
       depends_on:

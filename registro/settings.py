@@ -43,17 +43,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_crontab',
+#    'django_crontab',
     'channels',
     'areariservata',
     'homepage',
     'core',
 ]
 
-CRONJOBS = [
-    ('15 0 * * *', 'django.core.management.generaReport', ['generaReport']),
-    ('5 0 * * *', 'django.core.management.aggiornaTurni', ['aggiornaTurni']),
-]
+#CRONJOBS = [
+#    ('15 0 * * *', 'django.core.management.generaReport', ['generaReport']),
+#    ('5 0 * * *', 'django.core.management.aggiornaTurni', ['aggiornaTurni']),
+#]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
