@@ -5,7 +5,7 @@ from core.views import telegram
 from django.utils import timezone
 from django.contrib import messages
 
-@login_required(login_url='login')
+@login_required(login_url='/login/')
 def homepage(request):
     if RegistroGiornaliero.objects.filter(data=timezone.now().date()).exists() == False:
         RegistroGiornaliero.objects.create(data=timezone.now().date())
@@ -41,7 +41,7 @@ def homepage(request):
         return redirect('/')
     
     turno_attivo = TurnoVigilanza.objects.filter(vigilante=request.user, orario_fine__isnull=True).first()
-    accessi = Accesso.objects.filter(turno__data=data).select_related('turno').order_by('-oraIngresso')
+    accessi = Accesso.objects.filter(turno__data=data).select_related('turno').order_by('oraUscita', 'oraIngresso')
     
     note = RegistroGiornaliero.objects.get(data=data).note
     registro = RegistroGiornaliero.objects.get(data=data)
@@ -57,6 +57,7 @@ def homepage(request):
         'ultimaMarcatura': ultimaMarcatura
     })
 
+@login_required(login_url='/login/')
 def messaggioTelegram(request):
     if request.method == "POST" and request.user.is_authenticated:
         messaggio = request.POST.get("messaggio")

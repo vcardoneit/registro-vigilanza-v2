@@ -20,7 +20,7 @@ from reportlab.lib.units import cm
 import os
 from PyPDF2 import PdfReader, PdfWriter
 
-@staff_member_required(login_url='')
+@staff_member_required(login_url='/login/')
 def dashboard(request):
     if request.method == 'POST' and 'data' in request.POST:
         try:
@@ -30,8 +30,8 @@ def dashboard(request):
     else:
         data = timezone.localdate()
 
-    listaAccessi = Accesso.objects.filter(oraIngresso__date=data).order_by('oraIngresso')
-    listaTurni = TurnoVigilanza.objects.filter(orario_inizio__date=data).order_by('orario_inizio')
+    listaAccessi = Accesso.objects.filter(oraIngresso__date=data).order_by('oraUscita', 'oraIngresso')
+    listaTurni = TurnoVigilanza.objects.filter(orario_inizio__date=data).order_by('-orario_inizio')
     listaPresenze = Presenza.objects.filter(registro__data=data).select_related('personale').order_by('personale__nominativo')
     note = RegistroGiornaliero.objects.filter(data=data).values_list('note', flat=True)
 
@@ -45,6 +45,7 @@ def dashboard(request):
 
     return render(request, 'areariservata/index.html', context)
 
+@staff_member_required(login_url='/login/')
 def impostazioni(request):
     if request.method == "POST" and request.user.is_staff:
         bot_token = request.POST.get("telegram_bot_token")
@@ -66,6 +67,7 @@ def impostazioni(request):
         "telegram_chat_id": chat_id,
     })
 
+@staff_member_required(login_url='/login/')
 def utenti(request):
     personaleINAF = PersonaleINAF.objects.all().order_by('nominativo')
     vigilanti = User.objects.filter(is_staff=False).order_by('username').exclude(username='centrale_operativa')
@@ -76,6 +78,7 @@ def utenti(request):
 
 # --------------- Gestione Utenti INAF ---------------
 
+@staff_member_required(login_url='/login/')
 def aggiungiPersonaleINAF(request):
     if request.method == "POST" and request.user.is_staff:
         nome_completo = request.POST.get("nome")
@@ -100,6 +103,7 @@ def aggiungiPersonaleINAF(request):
     else:
         return redirect("/utenti/")
 
+@staff_member_required(login_url='/login/')
 def rimuoviPersonaleINAF(request, personale_id):
     if request.user.is_staff:
         try:
@@ -114,6 +118,7 @@ def rimuoviPersonaleINAF(request, personale_id):
     else:
         return redirect("/")
 
+@staff_member_required(login_url='/login/')
 def modificaPersonaleINAF(request, personale_id):
     if request.method == "POST" and request.user.is_staff:
         nome_completo = request.POST.get("nome")
@@ -149,6 +154,7 @@ def modificaPersonaleINAF(request, personale_id):
 
 # --------------- Gestione Vigilanti ---------------
 
+@staff_member_required(login_url='/login/')
 def aggiungiVigilante(request):
     if request.method == "POST" and request.user.is_staff:
         username = request.POST.get("username")
@@ -168,6 +174,7 @@ def aggiungiVigilante(request):
     else:
         return redirect("/utenti/")
 
+@staff_member_required(login_url='/login/')
 def rimuoviVigilante(request, vigilante_id):
     if request.user.is_staff:
         try:
@@ -182,6 +189,7 @@ def rimuoviVigilante(request, vigilante_id):
     else:
         return redirect("/utenti/")
     
+@staff_member_required(login_url='/login/')
 def modificaVigilante(request, vigilante_id):
     if request.method == "POST" and request.user.is_staff:
         username = request.POST.get("username")
@@ -215,11 +223,13 @@ def modificaVigilante(request, vigilante_id):
 
 # --------------- Fine Gestione Vigilanti ---------------
 
+@staff_member_required(login_url='/login/')
 def logs(request):
     logs = Log.objects.all().order_by('-timestamp')
     users = User.objects.all()
     return render(request, 'areariservata/logs.html', {'logs': logs, 'users': users})
 
+@staff_member_required(login_url='/login/')
 def esportaLogs(request):
     if request.method == "POST" and request.user.is_staff:
         data_inizio_naive = parse_datetime(request.POST.get("date_start"))
@@ -262,6 +272,7 @@ def esportaLogs(request):
     else:
         return redirect("logs")
 
+@staff_member_required(login_url='/login/')
 def documenti(request):
     if request.method == "POST" and (request.user.is_staff or request.user.username == "centrale_operativa"):
         documento = request.FILES.get("file")
@@ -301,6 +312,7 @@ def documenti(request):
     turni = Turni.objects.all().order_by('-data_riferimento')
     return render(request, 'areariservata/documenti.html', {'reports': reports, 'fatture': fatture, 'turni': turni})
 
+@staff_member_required(login_url='/login/')
 def ricerca(request):
     if request.user.is_staff:
         custodi = User.objects.filter(is_staff=False).order_by('username').exclude(username='centrale_operativa')
@@ -353,7 +365,7 @@ def ricerca(request):
         return render(request, "areariservata/ricerca.html", { "custodi": custodi })
     else:
         return redirect("/")
-    
+
 
 def creaReport(data):
     datiRegistro = RegistroGiornaliero.objects.get(data=data)
@@ -481,7 +493,7 @@ def unisciPDF(data):
 
     return output_buffer
 
-
+@staff_member_required(login_url='/login/')
 def generaPDF(request):
     data = request.POST.get("data")
     pdf_buffer = unisciPDF(data)
@@ -592,6 +604,7 @@ def creaReportSearch(turni=None, accessi=None, start=None, end=None):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+@staff_member_required(login_url='/login/')
 def generaReportMensile(request, year, month):
     try:
         year = int(year)

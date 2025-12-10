@@ -11,6 +11,7 @@ from areariservata.views import unisciPDF
 from .models import ReportGiornaliero
 from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
 import json
 from django.http import JsonResponse
 from asgiref.sync import async_to_sync
@@ -95,6 +96,7 @@ def login(request):
     usernames = User.objects.filter(is_staff=False).exclude(username='centrale_operativa')
     return render(request, 'login.html', {'usernames': usernames})
 
+@login_required(login_url='/login/')
 def logout(request):
     if request.user.is_staff == False:
         try:
@@ -137,6 +139,7 @@ def cambiaPassword(request):
         usernames = User.objects.filter(is_staff=False).exclude(username='centrale_operativa')
         return render(request, "changepassword.html", {"usernames": usernames})
 
+@login_required(login_url='/login/')
 def aggiornaRegistroVigilanza(request):
     if request.method == "POST" and request.user.is_authenticated:
         registro = RegistroGiornaliero.objects.get(data=timezone.now().date())
@@ -160,29 +163,42 @@ def aggiornaRegistroVigilanza(request):
         return redirect("/")
     else:
         return redirect("/")
-    
+
+@login_required(login_url='/login/')
 def registraAccesso(request, turno_id):
     if request.method == "POST" and request.user.is_authenticated:
-        nominativi = request.POST.get("nominativi")
+        nominativi_raw = request.POST.get("nominativi")
         ditta = request.POST.get("ditta")
         oraIngresso_time = timezone.datetime.strptime(request.POST.get("oraIngresso"), "%H:%M").time()
         oraIngresso = timezone.make_aware(
             timezone.datetime.combine(timezone.now().date(), oraIngresso_time),
             timezone.get_current_timezone()
         )
-        nuovo_accesso = Accesso(turno_id=turno_id, nominativi=nominativi, ditta=ditta, oraIngresso=oraIngresso)
-        nuovo_accesso.save()
+        
+        nominativi_list = [n.strip() for n in nominativi_raw.split('\n') if n.strip()]
+        
+        accessi_creati = []
+        for nominativo in nominativi_list:
+            nuovo_accesso = Accesso(turno_id=turno_id, nominativi=nominativo, ditta=ditta, oraIngresso=oraIngresso)
+            nuovo_accesso.save()
+            accessi_creati.append(nominativo)
+        
         log = Log(
             timestamp=timezone.now(),
             utente=request.user,
-            azione=f"Registrato nuovo accesso: Nominativi={nominativi}, Ditta={ditta}, Ora Ingresso={oraIngresso}"
+            azione=f"Registrati {len(accessi_creati)} nuovi accessi: Nominativi={', '.join(accessi_creati)}, Ditta={ditta}, Ora Ingresso={oraIngresso}"
         )
         log.save()
-        messages.success(request, "Accesso registrato con successo")
+        
+        if len(accessi_creati) == 1:
+            messages.success(request, "Accesso registrato con successo")
+        else:
+            messages.success(request, f"{len(accessi_creati)} accessi registrati con successo")
         return redirect("/")
     else:
         return redirect("/")
-    
+
+@login_required(login_url='/login/')
 def aggiornaAccesso(request, accesso_id):
     if request.method == "POST" and request.user.is_authenticated:
         nominativi = request.POST.get("nominativi")
@@ -218,7 +234,8 @@ def aggiornaAccesso(request, accesso_id):
         return redirect("/")
     else:
         return redirect("/")
-    
+
+@login_required(login_url='/login/')
 def eliminaAccesso(request, accesso_id):
     if request.method == "POST" and request.user.is_authenticated:
         accesso = Accesso.objects.get(id=accesso_id)
