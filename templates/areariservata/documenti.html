@@ -6,23 +6,94 @@
 
 {% block extra_css %}
 <style>
-    .nav-tabs .nav-link { color: #6b7280; border: none; border-bottom: 2px solid transparent; font-weight: 500; }
-    .nav-tabs .nav-link:hover { color: #4f46e5; background: transparent; }
+    .nav-tabs .nav-link { color: #6b7280; border: none; border-bottom: 2px solid transparent; font-weight: 500; padding: 1rem 1.5rem; transition: all 0.2s; }
+    .nav-tabs .nav-link:hover { color: #4f46e5; background: #f9fafb; }
     .nav-tabs .nav-link.active { color: #4f46e5; border-bottom: 2px solid #4f46e5; background: transparent; font-weight: 600; }
-    
-    .file-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.1rem; margin-right: 0.75rem; flex-shrink: 0; }
+    .file-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 1.25rem; margin-right: 1rem; flex-shrink: 0; transition: transform 0.2s; }
     .file-icon.pdf { background-color: #fee2e2; color: #dc2626; }
     .file-icon.xls { background-color: #dcfce7; color: #166534; }
-    .file-icon.doc { background-color: #dbeafe; color: #1e40af; }
+    .file-icon:hover { transform: scale(1.05); }
+    .accordion-item-year {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px !important;
+        margin-bottom: 1rem;
+        background-color: #fff;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
     
-    .accordion-button { background-color: #f9fafb; color: #374151; font-weight: 600; box-shadow: none !important; }
-    .accordion-button:not(.collapsed) { background-color: #e0e7ff; color: #4338ca; }
-    .accordion-item { border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 0.5rem; border-radius: 8px !important; }
+    .accordion-button-year {
+        background-color: #fff;
+        color: #111827;
+        font-weight: 700;
+        font-size: 1.1rem;
+        padding: 1.25rem 1.5rem;
+        box-shadow: none !important;
+    }
     
-    [data-bs-theme="dark"] .accordion-button { background-color: #2d2d2d; color: #e5e5e5; }
-    [data-bs-theme="dark"] .accordion-button:not(.collapsed) { background-color: #312e81; color: #c7d2fe; }
-    [data-bs-theme="dark"] .accordion-item { border-color: #404040; background-color: #1e1e1e; }
+    .accordion-button-year:not(.collapsed) {
+        background-color: #f8fafc;
+        color: #4f46e5;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .accordion-month-wrapper { padding: 0; }
+
+    .accordion-item-month {
+        border: none;
+        border-bottom: 1px solid #f3f4f6;
+        background: transparent !important;
+        border-radius: 0 !important;
+    }
+
+    .accordion-button-month {
+        background-color: transparent;
+        color: #4b5563;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 1rem 1.5rem;
+        padding-left: 2rem;
+        box-shadow: none !important;
+        position: relative;
+    }
+
+    .accordion-button-month:hover { background-color: #f9fafb; color: #4f46e5; }
+
+    .accordion-button-month:not(.collapsed) {
+        background-color: #f0fdf4;
+        color: #15803d; 
+    }
+    
+    .accordion-button-month:not(.collapsed)::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px;
+        background-color: #15803d;
+    }
+
+    .accordion-body-month { padding: 0; background-color: #fff; }
+
+    .table-custom tr td { padding: 1rem 1.5rem; border-bottom: 1px solid #f3f4f6; }
+    .table-custom tr:last-child td { border-bottom: none; }
+    .table-custom thead th { background-color: #f9fafb; padding-left: 1.5rem; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; }
+
+    .empty-state-icon { width: 80px; height: 80px; background-color: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; color: #9ca3af; font-size: 2rem; }
+
+    [data-bs-theme="dark"] .accordion-item-year { border-color: #404040; background-color: #1e1e1e; }
+    [data-bs-theme="dark"] .accordion-button-year { background-color: #1e1e1e; color: #e5e5e5; }
+    [data-bs-theme="dark"] .accordion-button-year:not(.collapsed) { background-color: #262626; color: #818cf8; border-bottom-color: #404040; }
+    
+    [data-bs-theme="dark"] .accordion-item-month { border-bottom-color: #2d2d2d; }
+    [data-bs-theme="dark"] .accordion-button-month { color: #a3a3a3; }
+    [data-bs-theme="dark"] .accordion-button-month:hover { background-color: #262626; }
+    [data-bs-theme="dark"] .accordion-button-month:not(.collapsed) { background-color: #143525; color: #86efac; }
+    [data-bs-theme="dark"] .accordion-body-month { background-color: #1e1e1e; }
+    
+    [data-bs-theme="dark"] .table-custom thead th { background-color: #262626; color: #a3a3a3; border-bottom-color: #404040; }
+    [data-bs-theme="dark"] .table-custom tr td { border-bottom-color: #2d2d2d; color: #e5e5e5; }
     [data-bs-theme="dark"] .file-icon.pdf { background-color: #450a0a; color: #f87171; }
+    [data-bs-theme="dark"] .empty-state-icon { background-color: #262626; color: #4b5563; }
 </style>
 {% endblock %}
 
@@ -64,87 +135,83 @@
                         {% if reports %}
                             {% regroup reports by data_riferimento|date:"Y" as reports_by_year %}
                             
-                            <div class="accordion" id="accordionYears">
+                            <div class="accordion" id="accordionRepYears">
                                 {% for year in reports_by_year %}
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" id="heading{{ year.grouper }}">
-                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ year.grouper }}">
-                                            <i class="bi bi-folder2-open me-2"></i> Anno {{ year.grouper }}
+                                <div class="accordion-item accordion-item-year">
+                                    <h2 class="accordion-header" id="headingRep{{ year.grouper }}">
+                                        <button class="accordion-button accordion-button-year {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRep{{ year.grouper }}">
+                                            <i class="bi bi-calendar3 me-2 text-primary"></i> Anno {{ year.grouper }}
                                         </button>
                                     </h2>
-                                    <div id="collapse{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionYears">
+                                    <div id="collapseRep{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionRepYears">
                                         <div class="accordion-body p-0">
                                             
                                             {% regroup year.list by data_riferimento|date:"F" as reports_by_month %}
-                                            
-                                            <div class="accordion accordion-flush" id="accordionMonths{{ year.grouper }}">
+                                            <div class="accordion accordion-flush" id="accordionRepMonths{{ year.grouper }}">
                                                 {% for month in reports_by_month %}
-                                                <div class="accordion-item">
+                                                <div class="accordion-item accordion-item-month">
                                                     <h2 class="accordion-header">
-                                                        <button class="accordion-button collapsed ps-4 bg-transparent border-bottom" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ year.grouper }}-{{ forloop.counter }}">
-                                                            <i class="bi bi-calendar-event me-2 text-muted"></i> {{ month.grouper|capfirst }}
+                                                        <button class="accordion-button accordion-button-month collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRep{{ year.grouper }}-{{ forloop.counter }}">
+                                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                                <span>{{ month.grouper|capfirst }}</span>
+                                                                <span class="badge bg-light text-dark fw-normal border">{{ month.list|length }}</span>
+                                                            </div>
                                                         </button>
                                                     </h2>
-                                                    <div id="collapse{{ year.grouper }}-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionMonths{{ year.grouper }}">
-                                                        
-                                                        <div class="bg-light p-2 border-bottom d-flex justify-content-end align-items-center">
-                                                            <a href="{% url 'generaReportMensile' year=month.list.0.data_riferimento|date:'Y' month=month.list.0.data_riferimento|date:'m' %}" 
-                                                            class="btn btn-sm btn-outline-primary d-flex align-items-center gap-2 shadow-sm">
-                                                             <i class="bi bi-file-earmark-bar-graph-fill"></i>
-                                                                Genera Report Mensile
-                                                            </a>
-                                                        </div>
-                                                        <div class="table-responsive">
-                                                            <table class="table table-custom mb-0 align-middle">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th style="width: 50%">Nome File</th>
-                                                                        <th>Data</th>
-                                                                        <th class="text-end">Download</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for report in month.list %}
-                                                                    <tr class="nrm">
-                                                                        <td>
-                                                                            <div class="d-flex align-items-center">
-                                                                                <div class="file-icon pdf">
-                                                                                    {% if report.is_monthly %}
-                                                                                        <i class="bi bi-collection-fill"></i> 
-                                                                                    {% else %}
-                                                                                        <i class="bi bi-file-earmark-pdf"></i>
-                                                                                    {% endif %}
+                                                    <div id="collapseRep{{ year.grouper }}-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionRepMonths{{ year.grouper }}">
+                                                        <div class="accordion-body accordion-body-month">
+                                                            
+                                                            <div class="px-4 py-2 bg-light border-bottom d-flex justify-content-end">
+                                                                <a href="{% url 'generaReportMensile' year=month.list.0.data_riferimento|date:'Y' month=month.list.0.data_riferimento|date:'m' %}" 
+                                                                   class="btn btn-sm btn-white border text-primary shadow-sm d-flex align-items-center gap-2" style="background: white;">
+                                                                    <i class="bi bi-magic"></i> Genera Report Mensile
+                                                                </a>
+                                                            </div>
+
+                                                            <div class="table-responsive">
+                                                                <table class="table table-custom mb-0 align-middle">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th style="width: 50%">Documento</th>
+                                                                            <th>Data Rif.</th>
+                                                                            <th class="text-end pe-4">Download</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for report in month.list %}
+                                                                        <tr class="nrm">
+                                                                            <td>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <div class="file-icon pdf shadow-sm">
+                                                                                        {% if report.is_monthly %}<i class="bi bi-stack"></i>{% else %}<i class="bi bi-file-earmark-pdf"></i>{% endif %}
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span class="fw-bold d-block">
+                                                                                            {% if report.is_monthly %}Report Mensile{% else %}Report Giornaliero{% endif %}
+                                                                                        </span>
+                                                                                        <small class="text-muted">Caricato il: {{ report.creato_il|date:"d/m/Y" }}</small>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div>
-                                                                                    <span class="fw-bold d-block">
-                                                                                        {% if report.is_monthly %}
-                                                                                            Report mensile
-                                                                                        {% else %}
-                                                                                            Report giornaliero
-                                                                                        {% endif %}
-                                                                                    </span>
-                                                                                    <small class="text-muted">Caricato il: {{ report.creato_il|date:"d/m/Y" }}</small>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        {% if report.is_monthly %}
-                                                                        <td>Mensile - {{ report.data_riferimento|date:"F Y" }}</td>
-                                                                        {% else %}
-                                                                        <td>{{ report.data_riferimento|date:"l d F Y" }}</td>
-                                                                        {% endif %}
-                                                                        <td class="text-end">
-                                                                            {% if report.pdf %}
-                                                                            <a href="{{ report.pdf.url }}" class="btn btn-sm btn-light border shadow-sm" target="_blank" title="Scarica PDF">
-                                                                                <i class="bi bi-download text-primary"></i>
-                                                                            </a>
-                                                                            {% else %}
-                                                                            <span class="text-muted small">File mancante</span>
-                                                                            {% endif %}
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
+                                                                            </td>
+                                                                            <td>
+                                                                                {% if report.is_monthly %}
+                                                                                    Mensile
+                                                                                {% else %}
+                                                                                    {{ report.data_riferimento|date:"d M Y" }}
+                                                                                {% endif %}
+                                                                            </td>
+                                                                            <td class="text-end pe-4">
+                                                                                {% if report.pdf %}
+                                                                                <a href="{{ report.pdf.url }}" class="btn btn-sm btn-light border shadow-sm text-primary" target="_blank" title="Scarica PDF">
+                                                                                    <i class="bi bi-download"></i>
+                                                                                </a>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -157,8 +224,9 @@
                             </div>
                         {% else %}
                             <div class="text-center py-5">
-                                <i class="bi bi-folder-x text-muted" style="font-size: 2rem;"></i>
-                                <p class="text-muted mt-2">Nessun report giornaliero presente.</p>
+                                <div class="empty-state-icon"><i class="bi bi-bar-chart"></i></div>
+                                <h5 class="fw-bold text-muted">Nessun report presente</h5>
+                                <p class="text-muted">Non sono stati caricati report giornalieri.</p>
                             </div>
                         {% endif %}
                     </div>
@@ -167,73 +235,76 @@
                         {% if fatture %}
                             {% regroup fatture by data_riferimento|date:"Y" as invoices_by_year %}
                             
-                            <div class="accordion" id="accordionInvoices">
+                            <div class="accordion" id="accordionInvYears">
                                 {% for year in invoices_by_year %}
-                                <div class="accordion-item">
+                                <div class="accordion-item accordion-item-year">
                                     <h2 class="accordion-header" id="headingInv{{ year.grouper }}">
-                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInv{{ year.grouper }}">
-                                            <i class="bi bi-folder2-open me-2"></i> Anno {{ year.grouper }}
+                                        <button class="accordion-button accordion-button-year {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInv{{ year.grouper }}">
+                                            <i class="bi bi-receipt me-2 text-primary"></i> Anno {{ year.grouper }}
                                         </button>
                                     </h2>
-                                    <div id="collapseInv{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionInvoices">
+                                    <div id="collapseInv{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionInvYears">
                                         <div class="accordion-body p-0">
                                             
                                             {% regroup year.list by data_riferimento|date:"F" as invoices_by_month %}
-                                            
                                             <div class="accordion accordion-flush" id="accordionInvMonths{{ year.grouper }}">
                                                 {% for month in invoices_by_month %}
-                                                <div class="accordion-item">
+                                                <div class="accordion-item accordion-item-month">
                                                     <h2 class="accordion-header">
-                                                        <button class="accordion-button collapsed ps-4 bg-transparent border-bottom" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInv{{ year.grouper }}-{{ forloop.counter }}">
-                                                            <i class="bi bi-calendar-event me-2 text-muted"></i> {{ month.grouper|capfirst }}
+                                                        <button class="accordion-button accordion-button-month collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInv{{ year.grouper }}-{{ forloop.counter }}">
+                                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                                <span>{{ month.grouper|capfirst }}</span>
+                                                                <span class="badge bg-light text-dark fw-normal border">{{ month.list|length }}</span>
+                                                            </div>
                                                         </button>
                                                     </h2>
                                                     <div id="collapseInv{{ year.grouper }}-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionInvMonths{{ year.grouper }}">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-custom mb-0 align-middle">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th style="width: 45%">Nome File</th>
-                                                                        <th style="width: 35%">Descrizione</th>
-                                                                        <th style="width: 10%">Caricato il</th>
-                                                                        <th class="text-end">Azioni</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for invoice in month.list %}
-                                                                    <tr class="nrm">
-                                                                        <td>
-                                                                            <div class="d-flex align-items-center">
-                                                                                <div class="file-icon pdf"><i class="bi bi-file-earmark-text"></i></div>
-                                                                                <div>
-                                                                                    <span class="fw-bold d-block text-truncate" style="max-width: 250px;" title="{{ invoice.nome_file }}">
-                                                                                        {{ invoice.nome_file }}
-                                                                                    </span>
-                                                                                    <small class="text-muted" style="font-size: 0.75rem;">Rif: {{ invoice.data_riferimento|date:"d/m/Y" }}</small>
+                                                        <div class="accordion-body accordion-body-month">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-custom mb-0 align-middle">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th style="width: 45%">Nome File</th>
+                                                                            <th style="width: 35%">Descrizione</th>
+                                                                            <th style="width: 10%">Caricato il</th>
+                                                                            <th class="text-end pe-4">Azioni</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for invoice in month.list %}
+                                                                        <tr class="nrm">
+                                                                            <td>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <div class="file-icon pdf shadow-sm"><i class="bi bi-file-earmark-text"></i></div>
+                                                                                    <div>
+                                                                                        <span class="fw-bold d-block text-truncate" style="max-width: 250px;" title="{{ invoice.nome_file }}">
+                                                                                            {{ invoice.nome_file }}
+                                                                                        </span>
+                                                                                        <small class="text-muted">Rif: {{ invoice.data_riferimento|date:"d/m/Y" }}</small>
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="text-muted small">{{ invoice.descrizione|default:"-"|truncatechars:50 }}</span>
-                                                                        </td>
-                                                                        <td>{{ invoice.data_caricamento|date:"d/m/Y" }}</td>
-                                                                        <td class="text-end">
-                                                                            {% if invoice.file %}
-                                                                            <a href="{{ invoice.file.url }}" class="btn btn-sm btn-light border shadow-sm" target="_blank" title="Scarica">
-                                                                                <i class="bi bi-download text-primary"></i>
-                                                                            </a>
-                                                                            {% endif %}
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
+                                                                            </td>
+                                                                            <td>
+                                                                                <span class="text-muted small">{{ invoice.descrizione|default:"-"|truncatechars:50 }}</span>
+                                                                            </td>
+                                                                            <td>{{ invoice.data_caricamento|date:"d/m/Y" }}</td>
+                                                                            <td class="text-end pe-4">
+                                                                                {% if invoice.file %}
+                                                                                <a href="{{ invoice.file.url }}" class="btn btn-sm btn-light border shadow-sm text-primary" target="_blank" title="Scarica">
+                                                                                    <i class="bi bi-download"></i>
+                                                                                </a>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 {% endfor %}
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -241,8 +312,9 @@
                             </div>
                         {% else %}
                             <div class="text-center py-5">
-                                <i class="bi bi-folder-x text-muted" style="font-size: 2rem;"></i>
-                                <p class="text-muted mt-2">Nessuna fattura presente in archivio.</p>
+                                <div class="empty-state-icon"><i class="bi bi-inbox"></i></div>
+                                <h5 class="fw-bold text-muted">Nessuna fattura presente</h5>
+                                <p class="text-muted">L'archivio fatture è vuoto.</p>
                             </div>
                         {% endif %}
                     </div>
@@ -251,67 +323,71 @@
                         {% if turni %}
                             {% regroup turni by data_riferimento|date:"Y" as shifts_by_year %}
                             
-                            <div class="accordion" id="accordionShifts">
+                            <div class="accordion" id="accordionShiftYears">
                                 {% for year in shifts_by_year %}
-                                <div class="accordion-item">
+                                <div class="accordion-item accordion-item-year">
                                     <h2 class="accordion-header" id="headingShift{{ year.grouper }}">
-                                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShift{{ year.grouper }}">
-                                            <i class="bi bi-folder2-open me-2"></i> Anno {{ year.grouper }}
+                                        <button class="accordion-button accordion-button-year {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShift{{ year.grouper }}">
+                                            <i class="bi bi-calendar-week me-2 text-primary"></i> Anno {{ year.grouper }}
                                         </button>
                                     </h2>
-                                    <div id="collapseShift{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionShifts">
+                                    <div id="collapseShift{{ year.grouper }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionShiftYears">
                                         <div class="accordion-body p-0">
                                             
                                             {% regroup year.list by data_riferimento|date:"F" as shifts_by_month %}
-                                            
                                             <div class="accordion accordion-flush" id="accordionShiftMonths{{ year.grouper }}">
                                                 {% for month in shifts_by_month %}
-                                                <div class="accordion-item">
+                                                <div class="accordion-item accordion-item-month">
                                                     <h2 class="accordion-header">
-                                                        <button class="accordion-button collapsed ps-4 bg-transparent border-bottom" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShift{{ year.grouper }}-{{ forloop.counter }}">
-                                                            <i class="bi bi-calendar-event me-2 text-muted"></i> {{ month.grouper|capfirst }}
+                                                        <button class="accordion-button accordion-button-month collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShift{{ year.grouper }}-{{ forloop.counter }}">
+                                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                                <span>{{ month.grouper|capfirst }}</span>
+                                                                <span class="badge bg-light text-dark fw-normal border">{{ month.list|length }}</span>
+                                                            </div>
                                                         </button>
                                                     </h2>
                                                     <div id="collapseShift{{ year.grouper }}-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#accordionShiftMonths{{ year.grouper }}">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-custom mb-0 align-middle">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th style="width: 45%">Nome File</th>
-                                                                        <th style="width: 35%">Descrizione</th>
-                                                                        <th style="width: 10%">Caricato il</th>
-                                                                        <th class="text-end">Azioni</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {% for turno in month.list %}
-                                                                    <tr class="nrm">
-                                                                        <td>
-                                                                            <div class="d-flex align-items-center">
-                                                                                <div class="file-icon pdf"><i class="bi bi-file-earmark-pdf"></i></div>
-                                                                                <div>
-                                                                                    <span class="fw-bold d-block text-truncate" style="max-width: 250px;" title="{{ turno.nome_file }}">
-                                                                                        {{ turno.nome_file }}
-                                                                                    </span>
-                                                                                    <small class="text-muted" style="font-size: 0.75rem;">Rif: {{ turno.data_riferimento|date:"d/m/Y" }}</small>
+                                                        <div class="accordion-body accordion-body-month">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-custom mb-0 align-middle">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th style="width: 45%">Nome File</th>
+                                                                            <th style="width: 35%">Descrizione</th>
+                                                                            <th style="width: 10%">Caricato il</th>
+                                                                            <th class="text-end pe-4">Azioni</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {% for turno in month.list %}
+                                                                        <tr class="nrm">
+                                                                            <td>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <div class="file-icon pdf shadow-sm"><i class="bi bi-file-earmark-pdf"></i></div>
+                                                                                    <div>
+                                                                                        <span class="fw-bold d-block text-truncate" style="max-width: 250px;" title="{{ turno.nome_file }}">
+                                                                                            {{ turno.nome_file }}
+                                                                                        </span>
+                                                                                        <small class="text-muted">Rif: {{ turno.data_riferimento|date:"d/m/Y" }}</small>
+                                                                                    </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span class="text-muted small">{{ turno.descrizione|default:"-"|truncatechars:50 }}</span>
-                                                                        </td>
-                                                                        <td>{{ turno.data_caricamento|date:"d/m/Y" }}</td>
-                                                                        <td class="text-end">
-                                                                            {% if turno.file %}
-                                                                            <a href="{{ turno.file.url }}" class="btn btn-sm btn-light border shadow-sm" target="_blank" title="Scarica">
-                                                                                <i class="bi bi-download text-primary"></i>
-                                                                            </a>
-                                                                            {% endif %}
-                                                                        </td>
-                                                                    </tr>
-                                                                    {% endfor %}
-                                                                </tbody>
-                                                            </table>
+                                                                            </td>
+                                                                            <td>
+                                                                                <span class="text-muted small">{{ turno.descrizione|default:"-"|truncatechars:50 }}</span>
+                                                                            </td>
+                                                                            <td>{{ turno.data_caricamento|date:"d/m/Y" }}</td>
+                                                                            <td class="text-end pe-4">
+                                                                                {% if turno.file %}
+                                                                                <a href="{{ turno.file.url }}" class="btn btn-sm btn-light border shadow-sm text-primary" target="_blank" title="Scarica">
+                                                                                    <i class="bi bi-download"></i>
+                                                                                </a>
+                                                                                {% endif %}
+                                                                            </td>
+                                                                        </tr>
+                                                                        {% endfor %}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

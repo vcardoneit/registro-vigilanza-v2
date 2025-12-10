@@ -272,7 +272,6 @@ def esportaLogs(request):
     else:
         return redirect("logs")
 
-@staff_member_required(login_url='/login/')
 def documenti(request):
     if request.method == "POST" and (request.user.is_staff or request.user.username == "centrale_operativa"):
         documento = request.FILES.get("file")
@@ -302,15 +301,18 @@ def documenti(request):
             messages.warning(request, "Tipo di documento non valido.")
 
         return redirect("/documenti/")
-    report_Giornalieri = ReportGiornaliero.objects.all().order_by('-data_riferimento')
-    report_Mensili = ReportMensile.objects.all().order_by('-data_riferimento')
-    reports = sorted(
-        list(report_Giornalieri) + list(report_Mensili),
-        key=lambda x: x.data_riferimento, reverse=True
-    )
-    fatture = Fattura.objects.all().order_by('-data_riferimento')
-    turni = Turni.objects.all().order_by('-data_riferimento')
-    return render(request, 'areariservata/documenti.html', {'reports': reports, 'fatture': fatture, 'turni': turni})
+    if request.user.is_staff or request.user.username == "centrale_operativa":
+        report_Giornalieri = ReportGiornaliero.objects.all().order_by('-data_riferimento')
+        report_Mensili = ReportMensile.objects.all().order_by('-data_riferimento')
+        reports = sorted(
+            list(report_Giornalieri) + list(report_Mensili),
+            key=lambda x: x.data_riferimento, reverse=True
+        )
+        fatture = Fattura.objects.all().order_by('-data_riferimento')
+        turni = Turni.objects.all().order_by('-data_riferimento')
+        return render(request, 'areariservata/documenti.html', {'reports': reports, 'fatture': fatture, 'turni': turni})
+    else:
+        return redirect("/")
 
 @staff_member_required(login_url='/login/')
 def ricerca(request):
