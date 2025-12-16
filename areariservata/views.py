@@ -30,7 +30,7 @@ def dashboard(request):
     else:
         data = timezone.localdate()
 
-    listaAccessi = Accesso.objects.filter(oraIngresso__date=data).order_by('oraUscita', 'oraIngresso')
+    listaAccessi = Accesso.objects.filter(oraIngresso__date=data).order_by('-oraUscita')
     listaTurni = TurnoVigilanza.objects.filter(orario_inizio__date=data).order_by('-orario_inizio')
     listaPresenze = Presenza.objects.filter(registro__data=data).select_related('personale').order_by('personale__nominativo')
     note = RegistroGiornaliero.objects.filter(data=data).values_list('note', flat=True)

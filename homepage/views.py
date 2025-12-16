@@ -41,7 +41,7 @@ def homepage(request):
         return redirect('/')
     
     turno_attivo = TurnoVigilanza.objects.filter(vigilante=request.user, orario_fine__isnull=True).first()
-    accessi = Accesso.objects.filter(turno__data=data).select_related('turno').order_by('oraUscita', 'oraIngresso')
+    accessi = Accesso.objects.filter(turno__data=data).select_related('turno').order_by('-oraUscita')
     
     note = RegistroGiornaliero.objects.get(data=data).note
     registro = RegistroGiornaliero.objects.get(data=data)
