@@ -217,6 +217,18 @@ registro-vigilanza-v2/
 | `DEBUG` | Modalità debug | `False` |
 | `TZ` | Timezone | `Europe/Rome` |
 
+## ⏰ Operazioni Pianificate (Crontab)
+
+Per il corretto funzionamento della generazione dei report e la gestione automatica dei turni, è necessario configurare le seguenti operazioni pianificate nel crontab del server ospitante.
+
+```bash
+# Aggiornamento turni (es. ogni giorno alle 01:00)
+0 1 * * * docker exec rgv-app python manage.py aggiornaTurni >> /var/log/aggiornaTurni.log 2>&1
+
+# Generazione report PDF (es. ogni giorno alle 03:00)
+0 3 * * * docker exec rgv-app python manage.py generaReport >> /var/log/generaReport.log 2>&1
+```
+
 ## 🔧 Comandi Utili
 
 ### Docker
