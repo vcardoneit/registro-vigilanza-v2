@@ -16,7 +16,7 @@ services:
       restart: unless-stopped
 
    app:
-      image: vcardoneit/registro-vigilanza-v2:latest
+      image: ghcr.io/vcardoneit/registro-vigilanza-v2:latest
       container_name: rgv-app
       restart: unless-stopped
       environment:
