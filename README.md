@@ -127,7 +127,7 @@ Il progetto "Registro Vigilanza" è una piattaforma web progettata per la digita
 - **WebSocket**: Django Channels + Redis
 - **Database**: PostgreSQL
 - **Server ASGI**: Uvicorn
-- **PDF Generation**: ReportLab + PyPDF2
+- **PDF Generation**: ReportLab + pypdf
 - **Authentication**: LDAP3
 - **Containerization**: Docker + Docker Compose
 
