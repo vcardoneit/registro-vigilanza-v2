@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.utils import timezone
 from ldap3 import Server, Connection, ALL, core
+from ldap3.utils.dn import escape_rdn
+from ldap3.utils.conv import escape_filter_chars
 import requests
 from .models import PersonaleINAF, Presenza, TurnoVigilanza, Accesso, RegistroGiornaliero, Log, Impostazioni
 from areariservata.views import unisciPDF
@@ -35,10 +37,12 @@ def login(request):
 
             server = Server("ldap://ldap.ced.inaf.it", get_info=ALL)
             search_base = "ou=people,dc=inaf,dc=it"
-            user_dn = f"uid={ldap_username},{search_base}"
+            safe_username_rdn = escape_rdn(ldap_username)
+            safe_username_filter = escape_filter_chars(ldap_username)
+            user_dn = f"uid={safe_username_rdn},{search_base}"
             try:
                 conn = Connection(server, user=user_dn, password=ldap_password, auto_bind=True)
-                conn.search(search_base, f"(uid={ldap_username})", attributes=['givenName', 'sn', 'mail'])
+                conn.search(search_base, f"(uid={safe_username_filter})", attributes=['givenName', 'sn', 'mail'])
             except core.exceptions.LDAPException:
                 messages.warning(request, "Username o password LDAP errati")
                 return redirect("/")
