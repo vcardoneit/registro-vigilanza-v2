@@ -9,6 +9,22 @@
 
 Il progetto "Registro Vigilanza" è una piattaforma web progettata per la digitalizzazione e la gestione centralizzata delle attività di vigilanza presso il Radiotelescopio di Noto. Il sistema sostituisce i tradizionali registri cartacei con una soluzione digitale che offre tracciabilità in tempo reale, integrazione con i sistemi di identità aziendali (LDAP) e generazione automatizzata di reportistica.
 
+## 📑 Indice
+
+- [Caratteristiche](#-caratteristiche)
+- [Funzionalità](#-funzionalità)
+- [Screenshot](#-screenshot)
+- [Tecnologie](#️-tecnologie)
+- [Requisiti](#-requisiti)
+- [Installazione](#-installazione)
+- [Struttura del Progetto](#️-struttura-del-progetto)
+- [Configurazione](#️-configurazione)
+- [Operazioni Pianificate](#-operazioni-pianificate-crontab)
+- [Comandi Utili](#-comandi-utili)
+- [Sicurezza](#-sicurezza)
+- [License](#-license)
+- [Autore](#-autore)
+
 ## 📋 Caratteristiche
 
 - **Dashboard in tempo reale** con WebSocket (Channels + Redis)
@@ -120,6 +136,36 @@ Il progetto "Registro Vigilanza" è una piattaforma web progettata per la digita
 - **Invio messaggi Telegram**: comunicazione con il personale INAF
 - **Ricerca storico**: consultazione registri di date precedenti
 - **Sistema marcature**: registrazione marcatura oraria
+
+## 📸 Screenshot
+
+> **Nota**: I dati visualizzati negli screenshot sono puramente casuali e di esempio. Non fanno riferimento a persone, organizzazioni o situazioni reali.
+
+<details>
+<summary>Clicca per visualizzare gli screenshot</summary>
+
+### Interfaccia Vigilante
+![Interfaccia Vigilante](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_vigilante.png)
+
+### Dashboard
+![Dashboard](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_dashboard.png)
+
+### Impostazioni
+![Impostazioni](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_impostazioni.png)
+
+### Utenti
+![Utenti](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_utenti.png)
+
+### Logs
+![Logs](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_logs.png)
+
+### Documenti
+![Documenti](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_documenti.png)
+
+### Ricerca
+![Ricerca](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_ricerca.png)
+
+</details>
 
 ## 🛠️ Tecnologie
 
