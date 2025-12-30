@@ -65,6 +65,7 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
+            overflow-x: hidden;
         }
 
         .card-custom {
@@ -234,6 +235,18 @@
             border-color: #ffc107 !important;
         }
 
+        /* --- EASTER EGG --- */
+        #bouncing-cat {
+            position: fixed;
+            width: 200px;
+            height: auto;
+            z-index: 10000;
+            display: none;
+            pointer-events: none;
+            user-select: none;
+            transition: opacity 1s ease;
+        }
+
     </style>
 </head>
 
@@ -241,7 +254,7 @@
 
     <nav class="navbar navbar-expand-lg shadow-sm sticky-top mb-4">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#" style="color:#4f46e5">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#" id="navbar-brand-logo" style="color:#4f46e5">
                 <i class="bi bi-shield-check fs-4"></i>
                 Vigilanza
             </a>
@@ -587,6 +600,7 @@
         </div>
     </div>
 
+    <img id="bouncing-cat" src="{% static 'cat.gif' %}" alt="Easter Egg">
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
@@ -743,6 +757,83 @@
                 location.reload();
             }
         }, 1000);
+
+        /* ----------------------- */
+        /* ----- EASTER EGG ------ */
+        /* ----------------------- */
+        document.addEventListener('DOMContentLoaded', function() {
+            const cat = document.getElementById('bouncing-cat');
+            
+            let x = 0, y = 0;
+            let dx = 3, dy = 3;
+            let isMoving = false;
+            
+            let winW = window.innerWidth;
+            let winH = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                winW = window.innerWidth;
+                winH = window.innerHeight;
+            });
+
+            function moveCat() {
+                if (!isMoving) return;
+
+                if (x + cat.clientWidth >= winW || x <= 0) {
+                    dx = -dx;
+                    cat.style.transform = dx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+                }
+                if (y + cat.clientHeight >= winH || y <= 0) {
+                    dy = -dy;
+                }
+
+                x += dx;
+                y += dy;
+
+                cat.style.left = x + 'px';
+                cat.style.top = y + 'px';
+
+                requestAnimationFrame(moveCat);
+            }
+
+            function startEasterEgg() {
+                if(isMoving) return;
+                
+                x = Math.random() * (winW - 150);
+                y = Math.random() * (winH - 150);
+                
+                dx = (Math.random() > 0.5 ? 3 : -3);
+                dy = (Math.random() > 0.5 ? 3 : -3);
+                
+                cat.style.left = x + 'px';
+                cat.style.top = y + 'px';
+                cat.style.transform = dx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+                cat.style.display = 'block';
+                
+                setTimeout(() => { cat.style.opacity = '1'; }, 50);
+                
+                isMoving = true;
+                moveCat();
+
+                setTimeout(() => {
+                    cat.style.opacity = '0';
+                    setTimeout(() => {
+                        isMoving = false;
+                        cat.style.display = 'none';
+                        scheduleNextCat();
+                    }, 1000);
+                }, 20000); 
+            }
+
+            // Trigger manuale
+            const logo = document.getElementById('navbar-brand-logo');
+            if(logo) {
+                logo.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    startEasterEgg();
+                });
+            }
+        });
     </script>
 
 </body>
