@@ -14,13 +14,15 @@ def homepage(request):
         return redirect('dashboard')
     
     if request.method == "POST" and "esegui_marcatura" in request.POST:
+        orario_marcatura = timezone.now()
         
         Marcatura.objects.create(
             utente=request.user,
-            orario=timezone.now(),
+            orario=orario_marcatura,
         )
         
-        log = Log(timestamp=timezone.now(), utente=request.user, azione="Marcatura effettuata")
+        log_action = f"Marcatura effettuata - Username: {request.user.username}, Orario: {timezone.localtime(orario_marcatura).strftime('%H:%M:%S')}"
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
 
         messages.success(request, "Marcatura eseguita con successo")
@@ -70,7 +72,8 @@ def messaggioTelegram(request):
         )
         telegram(message)
         
-        log = Log(timestamp=timezone.now(), utente=request.user, azione="Invio messaggio telegram: " + messaggio)
+        log_action = f"Messaggio Telegram inviato - Username: {request.user.username}, Lunghezza: {len(messaggio)} caratteri, Contenuto: {messaggio[:100]}{'...' if len(messaggio) > 100 else ''}"
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         messages.success(request, "Messaggio inviato con successo")
         return redirect("/")

@@ -52,21 +52,28 @@ def login(request):
             user_obj.is_staff = True
             user_obj.is_superuser = True
  
+            ldap_data = {}
             if conn.entries:
                 entry = conn.entries[0]
                 
                 if hasattr(entry, 'givenName'):
-                    user_obj.first_name = str(entry.givenName)
+                    ldap_data['first_name'] = str(entry.givenName)
+                    user_obj.first_name = ldap_data['first_name']
                 
                 if hasattr(entry, 'sn'):
-                    user_obj.last_name = str(entry.sn)
+                    ldap_data['last_name'] = str(entry.sn)
+                    user_obj.last_name = ldap_data['last_name']
                     
                 if hasattr(entry, 'mail'):
-                    user_obj.email = str(entry.mail)
+                    ldap_data['email'] = str(entry.mail)
+                    user_obj.email = ldap_data['email']
 
             user_obj.save()
 
-            log = Log(timestamp=timezone.now(), utente=user_obj, azione="Login LDAP effettuato")
+            log_action = f"Login LDAP effettuato - Utente: {ldap_username}"
+            if created:
+                log_action += f" [NUOVO UTENTE CREATO: {', '.join([f'{k}={v}' for k, v in ldap_data.items()])}]"
+            log = Log(timestamp=timezone.now(), utente=user_obj, azione=log_action)
             log.save()
             auth_login(request, user_obj)
             return redirect('/')
@@ -77,11 +84,12 @@ def login(request):
             user = authenticate(username=username, password=password)
             if username == "centrale_operativa":
                 auth_login(request, user)
-                log = Log(timestamp=timezone.now(), utente=user, azione="Login effettuato")
+                log = Log(timestamp=timezone.now(), utente=user, azione="Login centrale operativa effettuato")
                 log.save()
                 return redirect('documenti')
             if user is not None:
                 auth_login(request, user)
+                turno_creato = False
                 if request.user.is_staff == False:
                     turno = TurnoVigilanza.objects.create(
                         vigilante=user,
@@ -90,7 +98,12 @@ def login(request):
                         data=timezone.now().date()
                     )
                     turno.save()
-                log = Log(timestamp=timezone.now(), utente=user, azione="Login effettuato")
+                    turno_creato = True
+                
+                log_action = f"Login vigilante effettuato - Username: {username}"
+                if turno_creato:
+                    log_action += f" [Turno ID {turno.id} creato: inizio {timezone.localtime(turno.orario_inizio).strftime('%H:%M:%S')}]"
+                log = Log(timestamp=timezone.now(), utente=user, azione=log_action)
                 log.save()
                 return redirect('/')
             else:
@@ -102,14 +115,25 @@ def login(request):
 
 @login_required(login_url='/login/')
 def logout(request):
+    turno_chiuso = False
+    turno_info = ""
     if request.user.is_staff == False:
         try:
             turno = TurnoVigilanza.objects.get(vigilante=request.user, orario_fine__isnull=True)
             turno.orario_fine = timezone.now()
             turno.save()
+            turno_chiuso = True
+            durata = turno.orario_fine - turno.orario_inizio
+            ore = int(durata.total_seconds() // 3600)
+            minuti = int((durata.total_seconds() % 3600) // 60)
+            turno_info = f" [Turno ID {turno.id} chiuso: fine {timezone.localtime(turno.orario_fine).strftime('%H:%M:%S')}, durata {ore}h {minuti}m]"
         except TurnoVigilanza.DoesNotExist:
             pass
-    log = Log(timestamp=timezone.now(), utente=request.user, azione="Logout effettuato")
+    
+    log_action = f"Logout effettuato - Username: {request.user.username}"
+    if turno_chiuso:
+        log_action += turno_info
+    log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
     log.save()
     auth_logout(request)
     messages.success(request, "Logout effettuato con successo")
@@ -133,7 +157,8 @@ def cambiaPassword(request):
         if user is None:
             messages.warning(request, "Vecchia password errata")
             return redirect("/cambiaPassword/")
-        log = Log(timestamp=timezone.now(), utente=user, azione=f"Password cambiata per utente: {nomeutente}")
+        
+        log = Log(timestamp=timezone.now(), utente=user, azione=f"Password modificata - Username: {nomeutente}")
         log.save()
         user.set_password(newpassword)
         user.save()
@@ -148,7 +173,15 @@ def aggiornaRegistroVigilanza(request):
     if request.method == "POST" and request.user.is_authenticated:
         registro = RegistroGiornaliero.objects.get(data=timezone.now().date())
 
+        old_presenze = set(Presenza.objects.filter(registro=registro, is_present=True).values_list('personale_id', flat=True))
+        note_precedenti = registro.note
+
         personaleINAF = request.POST.getlist("personale_ids")
+        new_presenze = set(int(pid) for pid in personaleINAF)
+        
+        aggiunti = new_presenze - old_presenze
+        rimossi = old_presenze - new_presenze
+        
         Presenza.objects.filter(registro=registro).exclude(personale_id__in=personaleINAF).update(is_present=False)
         for personale_id in personaleINAF:
             Presenza.objects.update_or_create(
@@ -159,9 +192,25 @@ def aggiornaRegistroVigilanza(request):
 
         note = request.POST.get("note")
         registro.note = note
-
         registro.save()
-        log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Aggiornato registro vigilanza: Note={note}, Personale INAF={personaleINAF}")
+        
+        modifiche = []
+        if aggiunti:
+            nomi_aggiunti = [PersonaleINAF.objects.get(id=pid).nominativo for pid in aggiunti]
+            modifiche.append(f"Aggiunti: {', '.join(nomi_aggiunti)}")
+        if rimossi:
+            nomi_rimossi = [PersonaleINAF.objects.get(id=pid).nominativo for pid in rimossi]
+            modifiche.append(f"Rimossi: {', '.join(nomi_rimossi)}")
+        if note != note_precedenti:
+            modifiche.append(f"Note: '{note_precedenti or '(vuoto)'}' → '{note or '(vuoto)'}'")
+        
+        log_action = f"Registro vigilanza aggiornato - Data: {registro.data.strftime('%d/%m/%Y')}"
+        if modifiche:
+            log_action += f" [{' | '.join(modifiche)}]"
+        else:
+            log_action += " [Nessuna modifica effettiva]"
+        
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         messages.success(request, "Note e/o personale aggiornato con successo")
         return redirect("/")
@@ -185,13 +234,11 @@ def registraAccesso(request, turno_id):
         for nominativo in nominativi_list:
             nuovo_accesso = Accesso(turno_id=turno_id, nominativi=nominativo, ditta=ditta, oraIngresso=oraIngresso)
             nuovo_accesso.save()
-            accessi_creati.append(nominativo)
+            accessi_creati.append(f"{nominativo} (ID {nuovo_accesso.id})")
         
-        log = Log(
-            timestamp=timezone.now(),
-            utente=request.user,
-            azione=f"Registrati {len(accessi_creati)} nuovi accessi: Nominativi={', '.join(accessi_creati)}, Ditta={ditta}, Ora Ingresso={oraIngresso}"
-        )
+        turno = TurnoVigilanza.objects.get(id=turno_id)
+        log_action = f"Accessi registrati - Turno ID: {turno_id}, Vigilante: {turno.vigilante.username}, Ditta: {ditta}, Ora ingresso: {timezone.localtime(oraIngresso).strftime('%H:%M')}, Numero accessi: {len(accessi_creati)} [{'; '.join(accessi_creati)}]"
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         
         if len(accessi_creati) == 1:
@@ -205,6 +252,13 @@ def registraAccesso(request, turno_id):
 @login_required(login_url='/login/')
 def aggiornaAccesso(request, accesso_id):
     if request.method == "POST" and request.user.is_authenticated:
+        accesso = Accesso.objects.get(id=accesso_id)
+        
+        old_nominativi = accesso.nominativi
+        old_ditta = accesso.ditta
+        old_oraIngresso = accesso.oraIngresso
+        old_oraUscita = accesso.oraUscita
+        
         nominativi = request.POST.get("nominativi")
         ditta = request.POST.get("ditta")
         oraIngresso_time = timezone.datetime.strptime(request.POST.get("oraIngresso"), "%H:%M").time()
@@ -212,10 +266,11 @@ def aggiornaAccesso(request, accesso_id):
             timezone.datetime.combine(timezone.now().date(), oraIngresso_time),
             timezone.get_current_timezone()
         )
-        accesso = Accesso.objects.get(id=accesso_id)
+        
         accesso.nominativi = nominativi
         accesso.ditta = ditta
         accesso.oraIngresso = oraIngresso
+        
         if request.POST.get("oraUscita"):
             oraUscita_time = timezone.datetime.strptime(request.POST.get("oraUscita"), "%H:%M").time()
             oraUscita = timezone.make_aware(
@@ -225,13 +280,28 @@ def aggiornaAccesso(request, accesso_id):
             accesso.oraUscita = oraUscita
         else:
             accesso.oraUscita = None
+        
         accesso.save()
 
-        log_entry = Log(
-            timestamp=timezone.now(),
-            utente=request.user,
-            azione=f"Aggiornato accesso ID {accesso_id}: Nominativi={nominativi}, Ditta={ditta}, Ora Ingresso={oraIngresso}, Ora Uscita={accesso.oraUscita}"
-        )
+        modifiche = []
+        if old_nominativi != nominativi:
+            modifiche.append(f"Nominativi: '{old_nominativi}' → '{nominativi}'")
+        if old_ditta != ditta:
+            modifiche.append(f"Ditta: '{old_ditta}' → '{ditta}'")
+        if old_oraIngresso != oraIngresso:
+            modifiche.append(f"Ora ingresso: {timezone.localtime(old_oraIngresso).strftime('%H:%M')} → {timezone.localtime(oraIngresso).strftime('%H:%M')}")
+        if old_oraUscita != accesso.oraUscita:
+            old_uscita_str = timezone.localtime(old_oraUscita).strftime('%H:%M') if old_oraUscita else 'Non registrata'
+            new_uscita_str = timezone.localtime(accesso.oraUscita).strftime('%H:%M') if accesso.oraUscita else 'Rimossa'
+            modifiche.append(f"Ora uscita: {old_uscita_str} → {new_uscita_str}")
+        
+        log_action = f"Accesso aggiornato - ID: {accesso_id}, Turno ID: {accesso.turno.id}"
+        if modifiche:
+            log_action += f" [{' | '.join(modifiche)}]"
+        else:
+            log_action += " [Nessuna modifica effettiva]"
+        
+        log_entry = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log_entry.save()
         
         messages.success(request, "Accesso aggiornato con successo")
@@ -244,11 +314,12 @@ def eliminaAccesso(request, accesso_id):
     if request.method == "POST" and request.user.is_authenticated:
         accesso = Accesso.objects.get(id=accesso_id)
 
-        log = Log(
-            timestamp=timezone.now(),
-            utente=request.user,
-            azione=f"Eliminato accesso ID {accesso_id}: Nominativi={accesso.nominativi}, Ditta={accesso.ditta}, Ora Ingresso={accesso.oraIngresso}, Ora Uscita={accesso.oraUscita}"
-        )
+        log_action = f"Accesso eliminato - ID: {accesso_id}, Nominativi: {accesso.nominativi}, Ditta: {accesso.ditta}, Ora ingresso: {timezone.localtime(accesso.oraIngresso).strftime('%H:%M')}"
+        if accesso.oraUscita:
+            log_action += f", Ora uscita: {timezone.localtime(accesso.oraUscita).strftime('%H:%M')}"
+        log_action += f", Turno ID: {accesso.turno.id}"
+        
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
 
         accesso.delete()
@@ -287,6 +358,10 @@ def salvaPDFgiornaliero(date_obj):
     )
 
     report.pdf.save(filename, ContentFile(pdf_buffer.getvalue()), save=True)
+    
+    action = "creato" if created else "aggiornato"
+    log_action = f"Report giornaliero PDF {action} automaticamente - ID: {report.id}, Data: {today_str}, File: {filename}"
+    Log.objects.create(timestamp=timezone.now(), utente=None, azione=log_action)
 
     return report
 
@@ -320,11 +395,11 @@ def telegramWebhook(request):
                                             'message': f"<b>{username}</b>: {message_to_send}"
                                         }
                                     )
-                                    telegram(f"Messaggio inoltrato all'utente in turno <b>{target_user.username}</b>.")
+                                    telegram(f"✓ Messaggio inoltrato a <b>{target_user.username}</b> (Turno ID: {turno_attivo.id})")
                                 except TurnoVigilanza.DoesNotExist:
-                                    telegram("Nessun utente è attualmente in turno.")
+                                    telegram("✗ Impossibile inoltrare: nessun vigilante in turno attivo")
                             else:
-                                telegram("Il messaggio non può essere vuoto.")
+                                telegram("✗ Errore: il messaggio non può essere vuoto")
                     except Exception as e:
                         telegram(f"Errore inaspettato nel webhook: {str(e)}")
 

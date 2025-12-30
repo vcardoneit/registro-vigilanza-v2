@@ -48,16 +48,32 @@ def dashboard(request):
 @staff_member_required(login_url='/login/')
 def impostazioni(request):
     if request.method == "POST" and request.user.is_staff:
+        impostazioni, created = Impostazioni.objects.get_or_create(id=1)
+        
+        old_bot_token = impostazioni.telegram_bot_token
+        old_chat_id = impostazioni.telegram_chat_id
+        
         bot_token = request.POST.get("telegram_bot_token")
         chat_id = request.POST.get("telegram_chat_id")
 
-        impostazioni, created = Impostazioni.objects.get_or_create(id=1)
         impostazioni.telegram_bot_token = bot_token
         impostazioni.telegram_chat_id = chat_id
         impostazioni.save()
 
+        modifiche = []
+        if old_bot_token != bot_token:
+            modifiche.append(f"Bot Token: {'(vuoto)' if not old_bot_token else '***'} → {'(vuoto)' if not bot_token else '***'}")
+        if old_chat_id != chat_id:
+            modifiche.append(f"Chat ID: '{old_chat_id or '(vuoto)'}' → '{chat_id or '(vuoto)'}'")
+        
+        log_action = "Impostazioni Telegram aggiornate"
+        if modifiche:
+            log_action += f" [{' | '.join(modifiche)}]"
+        else:
+            log_action += " [Nessuna modifica effettiva]"
+
         messages.success(request, "Impostazioni salvate con successo.")
-        log = Log(timestamp=timezone.now(), utente=request.user, azione="Impostazioni Telegram aggiornate")
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         return redirect("/impostazioni/")
     bot_token = Impostazioni.objects.first().telegram_bot_token if Impostazioni.objects.exists() else ""
@@ -92,12 +108,17 @@ def aggiungiPersonaleINAF(request):
             messages.warning(request, "Esiste già un utente INAF con questo nome utente INAF.")
             return redirect("/utenti/")
 
-        PersonaleINAF.objects.create(
+        personale = PersonaleINAF.objects.create(
             nominativo=nome_completo,
             nomeutente=nomeutenteInaf if nomeutenteInaf else None
         )
+        
+        log_action = f"Aggiunto utente INAF - ID: {personale.id}, Nominativo: {nome_completo}"
+        if nomeutenteInaf:
+            log_action += f", Username INAF: {nomeutenteInaf}"
+        
         messages.success(request, "Utente INAF aggiunto con successo.")
-        log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Aggiunto utente INAF: {nome_completo}")
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         return redirect("/utenti/")
     else:
@@ -108,9 +129,13 @@ def rimuoviPersonaleINAF(request, personale_id):
     if request.user.is_staff:
         try:
             personale = PersonaleINAF.objects.get(id=personale_id)
+            log_action = f"Eliminato utente INAF - ID: {personale_id}, Nominativo: {personale.nominativo}"
+            if personale.nomeutente:
+                log_action += f", Username INAF: {personale.nomeutente}"
+            
             personale.delete()
             messages.success(request, "Utente INAF eliminato con successo.")
-            log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Eliminato utente INAF: {personale.nominativo}")
+            log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
             log.save()
         except PersonaleINAF.DoesNotExist:
             messages.warning(request, "Utente INAF non trovato.")
@@ -138,12 +163,29 @@ def modificaPersonaleINAF(request, personale_id):
             messages.warning(request, "Esiste già un utente INAF con questo nome utente INAF.")
             return redirect("/utenti/")
 
+        old_nominativo = personale.nominativo
+        old_nomeutente = personale.nomeutente
+
         personale.nominativo = nome_completo
         personale.nomeutente = nomeutenteInaf if nomeutenteInaf else None
         personale.save()
 
+        modifiche = []
+        if old_nominativo != nome_completo:
+            modifiche.append(f"Nominativo: '{old_nominativo}' → '{nome_completo}'")
+        if old_nomeutente != personale.nomeutente:
+            old_user_str = old_nomeutente or '(vuoto)'
+            new_user_str = personale.nomeutente or '(vuoto)'
+            modifiche.append(f"Username INAF: '{old_user_str}' → '{new_user_str}'")
+        
+        log_action = f"Aggiornato utente INAF - ID: {personale_id}"
+        if modifiche:
+            log_action += f" [{' | '.join(modifiche)}]"
+        else:
+            log_action += " [Nessuna modifica effettiva]"
+
         messages.success(request, "Utente INAF aggiornato con successo.")
-        log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Aggiornato utente INAF ID {personale_id}: {nome_completo}")
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         return redirect("/utenti/")
     else:
@@ -166,9 +208,12 @@ def aggiungiVigilante(request):
             messages.warning(request, "Esiste già un vigilante con questo username.")
             return redirect("/utenti/")
 
-        User.objects.create_user(username=username, password=password, first_name=firstname, last_name=lastname, is_staff=False)
+        vigilante = User.objects.create_user(username=username, password=password, first_name=firstname, last_name=lastname, is_staff=False)
+        
+        log_action = f"Aggiunto vigilante - ID: {vigilante.id}, Username: {username}, Nome: {firstname} {lastname}"
+        
         messages.success(request, "Vigilante aggiunto con successo.")
-        log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Aggiunto vigilante: {username}")
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         return redirect("/utenti/")
     else:
@@ -179,9 +224,11 @@ def rimuoviVigilante(request, vigilante_id):
     if request.user.is_staff:
         try:
             vigilante = User.objects.get(id=vigilante_id, is_staff=False)
+            log_action = f"Eliminato vigilante - ID: {vigilante_id}, Username: {vigilante.username}, Nome: {vigilante.get_full_name()}"
+            
             vigilante.delete()
             messages.success(request, "Vigilante eliminato con successo.")
-            log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Eliminato vigilante: {vigilante.username}")
+            log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
             log.save()
         except User.DoesNotExist:
             messages.warning(request, "Vigilante non trovato.")
@@ -207,15 +254,35 @@ def modificaVigilante(request, vigilante_id):
             messages.warning(request, "Esiste già un vigilante con questo username.")
             return redirect("/utenti/")
 
+        old_username = vigilante.username
+        old_firstname = vigilante.first_name
+        old_lastname = vigilante.last_name
+
         vigilante.username = username
         vigilante.first_name = firstname
         vigilante.last_name = lastname
+        
+        modifiche = []
+        if old_username != username:
+            modifiche.append(f"Username: '{old_username}' → '{username}'")
+        if old_firstname != firstname:
+            modifiche.append(f"Nome: '{old_firstname}' → '{firstname}'")
+        if old_lastname != lastname:
+            modifiche.append(f"Cognome: '{old_lastname}' → '{lastname}'")
         if password:
             vigilante.set_password(password)
+            modifiche.append("Password modificata")
+        
         vigilante.save()
 
+        log_action = f"Aggiornato vigilante - ID: {vigilante_id}"
+        if modifiche:
+            log_action += f" [{' | '.join(modifiche)}]"
+        else:
+            log_action += " [Nessuna modifica effettiva]"
+
         messages.success(request, "Vigilante aggiornato con successo.")
-        log = Log(timestamp=timezone.now(), utente=request.user, azione=f"Aggiornato vigilante ID {vigilante_id}: {username}")
+        log = Log(timestamp=timezone.now(), utente=request.user, azione=log_action)
         log.save()
         return redirect("/utenti/")
     else:
@@ -265,7 +332,8 @@ def esportaLogs(request):
                 log.azione
             ])
 
-        log_azione = f"Esportati log dal {data_inizio} al {data_fine}"
+        utente_filtro = "tutti gli utenti" if users == "all" else User.objects.get(id=int(users)).username
+        log_azione = f"Esportati log - Periodo: {timezone.localtime(data_inizio).strftime('%d/%m/%Y %H:%M')} - {timezone.localtime(data_fine).strftime('%d/%m/%Y %H:%M')}, Utente: {utente_filtro}, Record esportati: {logs.count()}"
         Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_azione)
 
         return response
@@ -280,23 +348,29 @@ def documenti(request):
         tipo_documento = request.POST.get("tipo_documento")
         
         if tipo_documento == "fattura":
-            Fattura.objects.create(
+            fattura = Fattura.objects.create(
                 file=documento,
                 descrizione=descrizione,
                 data_riferimento=data_riferimento,
                 data_caricamento=timezone.now()
             )
             messages.success(request, "Fattura caricata con successo.")
-            Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=f"Caricata fattura {documento.name}")
+            log_action = f"Caricata fattura - ID: {fattura.id}, Nome file: {documento.name}, Data riferimento: {data_riferimento}"
+            if descrizione:
+                log_action += f", Descrizione: {descrizione}"
+            Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_action)
         elif tipo_documento == "turno":
-            Turni.objects.create(
+            turno_doc = Turni.objects.create(
                 file=documento,
                 descrizione=descrizione,
                 data_riferimento=data_riferimento,
                 data_caricamento=timezone.now()
             )
             messages.success(request, "Documento turno caricato con successo.")
-            Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=f"Caricato documento turni {documento.name}")
+            log_action = f"Caricato documento turni - ID: {turno_doc.id}, Nome file: {documento.name}, Data riferimento: {data_riferimento}"
+            if descrizione:
+                log_action += f", Descrizione: {descrizione}"
+            Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_action)
         else:
             messages.warning(request, "Tipo di documento non valido.")
 
@@ -345,6 +419,11 @@ def ricerca(request):
                     accessi_risultati.extend(qs_accessi)
 
             if "generaPdf" in request.POST:
+                tipo_desc = {"turni": "turni", "accessi": "accessi", "all": "turni e accessi"}
+                custode_desc = "tutti i vigilanti" if custode == "tutti" else custode
+                log_action = f"Generato PDF ricerca - Tipo: {tipo_desc.get(tipo_ricerca, 'sconosciuto')}, Periodo: {data_inizio} - {data_fine}, Vigilante: {custode_desc}, Turni trovati: {len(turni_risultati)}, Accessi trovati: {len(accessi_risultati)}"
+                Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_action)
+                
                 if tipo_ricerca == "all":
                     return creaReportSearch(turni_risultati, accessi_risultati, data_inizio, data_fine)
                 elif tipo_ricerca == "turni":
@@ -502,6 +581,10 @@ def generaPDF(request):
     data_obj = timezone.datetime.strptime(data, '%Y-%m-%d').date()
     today_str = data_obj.strftime("%d-%m-%Y")
     filename = f"ReportServizioVigilanza_{today_str}.pdf"
+    
+    log_action = f"Generato PDF report giornaliero manualmente - Data: {today_str}"
+    Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_action)
+    
     response = HttpResponse(pdf_buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
@@ -659,6 +742,9 @@ def generaReportMensile(request, year, month):
         report_mensile.pdf.save(filename, ContentFile(output_buffer.getvalue()), save=True)
 
         action = "creato" if created else "aggiornato"
+        log_action = f"Report mensile {action} - ID: {report_mensile.id}, Mese: {month_name_eng} {year}, Report giornalieri inclusi: {files_count}"
+        Log.objects.create(timestamp=timezone.now(), utente=request.user, azione=log_action)
+        
         messages.success(request, f"Report mensile di {month_name_eng} {year} {action} con successo.")
         
         return redirect("documenti")
