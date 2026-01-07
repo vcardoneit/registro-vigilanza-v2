@@ -145,7 +145,7 @@ Il progetto "Registro Vigilanza" è una piattaforma web progettata per la digita
 <summary>Clicca per visualizzare gli screenshot</summary>
 
 ### Interfaccia Vigilante
-![Interfaccia Vigilante](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_vigilante.png)
+![Interfaccia Vigilante](https://noto.ira.inaf.it/wp-content/uploads/2026/01/reg_vigilante2.png)
 
 ### Dashboard
 ![Dashboard](https://noto.ira.inaf.it/wp-content/uploads/2025/12/reg_dashboard.png)
