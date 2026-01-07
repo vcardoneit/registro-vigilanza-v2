@@ -6,835 +6,561 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registro Vigilanza</title>
-    
+    <title>Registro Vigilanza | Dashboard</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'bootstrap-icons/bootstrap-icons.min.css' %}">
-    
-    <style>
-        @font-face {
-            font-family: 'Inter';
-            src: url("{% static 'fonts/Inter/Inter-VariableFont_opsz,wght.ttf' %}") format('truetype');
-            font-weight: 100 900;
-            font-style: normal;
-        }
-
-        :root {
-            --bg-body: #f3f4f6;
-            --bg-card: #ffffff;
-            --bg-input: #f9fafb;
-            --bg-inputNOTE: #e4e4e4;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
-            --primary-color: #4f46e5;
-            --primary-hover: #4338ca;
-            
-            --row-hover: #f9fafb;
-            --row-present-bg: #bafcdd;
-            --row-present-text: #04553e;
-            --badge-present-bg: #7dffbc;
-            --badge-exited-bg: #f3f4f6;
-            --checklist-hover: #f9fafb;
-        }
-
-        [data-theme="dark"] {
-            --bg-body: #111827;
-            --bg-card: #1f2937;
-            --bg-input: #374151;
-            --bg-inputNOTE: #4b5563;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border-color: #4b5563;
-            --primary-color: #6366f1;
-            --primary-hover: #818cf8;
-            
-            --row-hover: #2d3748;
-            --row-present-bg: #064e3b;
-            --row-present-text: #d1fae5;
-            --badge-present-bg: #065f46;
-            --badge-exited-bg: #374151;
-            --checklist-hover: #4b5563;
-        }
-
-        body, .card-custom, .form-control, table, th, td, .checklist-container {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            overflow-x: hidden;
-        }
-
-        .card-custom {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-        }
-
-        .card-header-custom {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: var(--text-main);
-            background-color: var(--bg-card);
-        }
-
-        .card-body-custom {
-            padding: 1.5rem;
-        }
-
-        .form-control {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-        .form-control:focus {
-            background-color: var(--bg-input);
-            color: var(--text-main);
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
-        }
-        .form-control:disabled {
-            background-color: var(--border-color);
-            opacity: 0.6;
-        }
-
-        .btn-primary-custom {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-        }
-        .btn-primary-custom:hover {
-            background-color: var(--primary-hover);
-            color: white;
-        }
-
-        .btn-secondary-custom {
-            background-color: var(--bg-input);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-        }
-        .btn-secondary-custom:hover {
-            background-color: var(--border-color);
-            color: var(--text-main);
-        }
-
-        .table-custom {
-            margin-bottom: 0;
-            vertical-align: middle;
-            color: var(--text-main);
-        }
-        .table-custom th {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            background-color: var(--bg-input);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem;
-            font-weight: 600;
-        }
-        .table-custom td {
-            padding: 1rem;
-            font-size: 0.9rem;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--bg-card);
-            color: var(--text-main);
-        }
-        
-        tr.nrm:hover td { background-color: var(--row-hover) !important; }
-        tr.prs td { background-color: var(--row-present-bg) !important; color: var(--row-present-text) !important; }
-        tr.dsb td { background-color: var(--bg-input) !important; color: var(--text-muted) !important; }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-block;
-        }
-        .status-present { background-color: var(--badge-present-bg); color: var(--row-present-text); }
-        .status-exited { background-color: var(--badge-exited-bg); color: var(--text-muted); border: 1px solid var(--border-color); }
-
-        .avatar-circle {
-            width: 32px;
-            height: 32px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-right: 0.5rem;
-        }
-
-        .checklist-container {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.5rem;
-        }
-
-        .checklist-item {
-            padding: 0.75rem;
-            margin-bottom: 2px;
-            border-radius: 6px;
-            color: var(--text-main);
-            transition: all 0.2s;
-        }
-        .checklist-item:hover {
-            background-color: var(--checklist-hover);
-        }
-        
-        .section-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-
-        .modal-content { background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
-        .modal-header { border-bottom-color: var(--border-color); }
-        [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-        .navbar { background-color: var(--bg-card) !important; border-bottom: 1px solid var(--border-color); }
-
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-        }
-
-        .btn-urgent {
-            background-color: #dc3545 !important;
-            color: white !important;
-            animation: pulse-red 2s infinite;
-            border-color: #dc3545 !important;
-        }
-
-        .btn-warning-custom {
-            background-color: #ffc107 !important;
-            color: #000 !important;
-            border-color: #ffc107 !important;
-        }
-
-        /* --- EASTER EGG --- */
-        #bouncing-cat {
-            position: fixed;
-            width: 200px;
-            height: auto;
-            z-index: 10000;
-            display: none;
-            pointer-events: none;
-            user-select: none;
-            transition: opacity 1s ease;
-        }
-
-    </style>
+    <link href="{% static 'css/customHome.css' %}" rel="stylesheet">
 </head>
 
 <body>
+    <header class="main-header">
+        <div class="container-fluid px-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <a href="#" class="logo" id="navbar-brand-logo">
+                    <i class="bi bi-shield-check" style="font-size: 1.5rem;"></i>
+                    <span>Vigilanza</span>
+                </a>
 
-    <nav class="navbar navbar-expand-lg shadow-sm sticky-top mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#" id="navbar-brand-logo" style="color:#4f46e5">
-                <i class="bi bi-shield-check fs-4"></i>
-                Vigilanza
-            </a>
-            
-            <div class="d-flex align-items-center gap-3">
-                
-                <button class="btn btn-secondary-custom btn-sm rounded-circle p-2" id="theme-toggle" title="Cambia tema">
-                    <i class="bi bi-moon-stars-fill" id="theme-icon"></i>
-                </button>
-
-                <div class="d-flex align-items-center d-none d-md-flex" style="color: var(--text-main);">
-                    <div class="avatar-circle">
-                        {{ request.user.username|make_list|first|upper }}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="user-badge d-flex">
+                        <div class="user-avatar">{{ request.user.username|make_list|first|upper }}</div>
+                        <span>{{ request.user.get_full_name|default:request.user.username }}</span>
                     </div>
-                    <span class="fw-medium">{{ request.user.get_full_name|default:request.user.username }}</span>
+
+                    <form method="post" action="{% url 'logout' %}" class="m-0">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary btn-danger" onclick="return confirm('Terminare il turno?');" style="padding: 0.625rem 0.875rem;">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span>Esci</span>
+                        </button>
+                    </form>
                 </div>
-                
-                <form method="post" action="{% url 'logout' %}" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger btn-sm px-3 py-2 rounded-3 fw-bold" onclick="return confirm('Sei sicuro di voler chiudere il turno?');">
-                        <i class="bi bi-power me-1"></i> Fine
-                    </button>
-                </form>
             </div>
         </div>
-    </nav>
+    </header>
 
     {% if messages %}
-    <div class="container mb-3">
+    <div class="px-3 mt-3">
         {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0 rounded-3" role="alert">
-            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-{{ message.tags }}">
+            <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}x-circle-fill{% endif %}"></i>
+            <span style="flex: 1;">{{ message }}</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.6rem;"></button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div id="reply-notification" class="d-none" aria-hidden="true"></div>
-    <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title text-primary"><i class="bi bi-chat-dots-fill me-2"></i> Messaggio INAF</h5>
-                    <button type="button" class="btn-close" id="reply-close-btn" data-bs-dismiss="modal"></button>
+    <main class="dashboard-grid">
+        <aside>
+            <div class="clock-display">
+                <div class="clock-time" id="current-time">--:--:--</div>
+                <div class="clock-date" id="current-date">--</div>
+            </div>
+
+            <div class="card sidebar-section">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-bar-chart-fill text-primary"></i>
+                        Statistiche Turno
+                    </h3>
                 </div>
-                <div class="modal-body">
-                    <div id="reply-box" class="p-3 rounded-3 border shadow-sm" style="background-color: var(--bg-input); color: var(--text-main);"></div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Inizio</div>
+                            <div class="stat-value">{{ turno_attivo.orario_inizio|date:"H:i" }}</div>
+                            <div class="stat-sub">{{ turno_attivo.orario_inizio|date:"d/m" }}</div>
+                        </div>
+                        <div class="stat-card accent">
+                            <div class="stat-label">Accessi</div>
+                            <div class="stat-value">{{ accessi|length }}</div>
+                            <div class="stat-sub">oggi</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="container pb-5">
-        <div class="row g-4">
-            
-            <div class="col-lg-8">
-                
-                <div class="card-custom">
-                    <div class="card-header-custom">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-people-fill text-primary"></i>
-                            <span>Personale Esterno</span>
+            <div class="card sidebar-section">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-calendar3 text-warning"></i>
+                        Ricerca Data
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        <div class="search-bar mb-2">
+                            <input type="date" class="form-input" id="data_ricerca" name="data_ricerca" value="{{ data|date:"Y-m-d" }}" required>
+                            <button type="submit" class="btn-primary">
+                                <i class="bi bi-search"></i>
+                            </button>
                         </div>
+                        <a href="" class="btn-secondary btn-block" style="text-decoration: none;">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i> Oggi
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-telegram text-info"></i>
+                        Messaggi INAF
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'messaggioTelegram' %}">
+                        {% csrf_token %}
+                        <textarea class="form-input mb-2" name="messaggio" rows="3" placeholder="Scrivi un messaggio..."></textarea>
+                        <button type="submit" class="btn-primary btn-block">
+                            <i class="bi bi-send-fill"></i> Invia
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <section>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-people-fill text-primary"></i>
+                        Personale Esterno
+                    </h3>
+                    {% if data|date:"Y-m-d" == oggi %}
+                    <button type="button" class="btn-primary" data-bs-toggle="modal" data-bs-target="#aggiungiPersonaleEsternoModal" style="padding: 0.625rem 0.875rem;">
+                        <i class="bi bi-plus-lg"></i>
+                        <span>Nuovo</span>
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if accessi %}
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Custode</th>
+                                <th>Nominativi</th>
+                                <th>Ditta</th>
+                                <th>Ingresso</th>
+                                <th>Uscita</th>
+                                {% if data|date:"Y-m-d" == oggi %}<th></th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for accesso in accessi %}
+                            <tr class="{% if accesso.oraIngresso|date:'Y-m-d' != data|date:'Y-m-d' %}past{% elif not accesso.oraUscita %}present{% endif %}">
+                                <td>
+                                    <strong>{{ accesso.turno.vigilante.get_full_name|default:accesso.turno.vigilante.username }}</strong>
+                                </td>
+                                <td>{{ accesso.nominativi }}</td>
+                                <td>{{ accesso.ditta }}</td>
+                                <td>{{ accesso.oraIngresso|date:"H:i" }}</td>
+                                <td>
+                                    {% if accesso.oraUscita %}
+                                        <span class="text-muted">{{ accesso.oraUscita|date:"H:i" }}</span>
+                                    {% else %}
+                                        <span class="badge badge-success">
+                                            <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i> Presente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                {% if data|date:"Y-m-d" == oggi %}
+                                <td>
+                                    <button class="btn-ghost" data-bs-toggle="modal" data-bs-target="#modificaPersonaleEsternoModal"
+                                            data-id="{{ accesso.id }}"
+                                            data-nominativi="{{ accesso.nominativi }}"
+                                            data-ditta="{{ accesso.ditta }}"
+                                            data-ora-ingresso="{{ accesso.oraIngresso|date:'H:i' }}"
+                                            data-ora-uscita="{{ accesso.oraUscita|date:'H:i' }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Nessun accesso registrato</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <form method="post" action="{% url 'aggiornaRegistro' %}" class="mt-3">
+                {% csrf_token %}
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="bi bi-journal-text text-warning"></i>
+                            Rapporto Turno
+                        </h3>
                         {% if data|date:"Y-m-d" == oggi %}
-                        <button type="button" class="btn btn-primary-custom btn-sm" data-bs-toggle="modal" data-bs-target="#aggiungiPersonaleEsternoModal">
-                            <i class="bi bi-plus-lg me-1"></i> Nuovo Accesso
+                        <button type="submit" class="btn-primary" style="padding: 0.625rem 0.875rem;">
+                            <i class="bi bi-check-lg"></i>
+                            <span>Salva</span>
                         </button>
                         {% endif %}
                     </div>
-
-                    <div class="table-responsive">
-                        {% if accessi %}
-                        <table class="table table-custom mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Custode</th>
-                                    <th>Nominativi</th>
-                                    <th>Ditta</th>
-                                    <th>Ingresso</th>
-                                    <th>Uscita</th>
-                                    <th class="text-center">Azioni</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for accesso in accessi %}
-                                <tr class="{% if accesso.oraIngresso|date:"Y-m-d" != data|date:"Y-m-d" %}dsb{% elif accesso.oraUscita %}nrm{% else %}prs{% endif %}">
-                                    <td class="fw-bold" style="color: var(--text-main);">{{ accesso.turno.vigilante.get_full_name|default:accesso.turno.vigilante.username }}</td>
-                                    <td>{{ accesso.nominativi }}</td>
-                                    <td>{{ accesso.ditta }}</td>
-                                    <td>{{ accesso.oraIngresso|date:"H:i" }}</td>
-                                    <td>
-                                        {% if accesso.oraUscita %} 
-                                            <span style="color: var(--text-muted);">{{ accesso.oraUscita|date:"H:i" }}</span>
-                                        {% else %} 
-                                            <span class="status-badge status-present">Presente</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        {% if data|date:"Y-m-d" == oggi %}
-                                        <button class="btn btn-sm btn-link" style="color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modificaPersonaleEsternoModal" 
-                                                data-id="{{ accesso.id }}" 
-                                                data-nominativi="{{ accesso.nominativi }}" 
-                                                data-ditta="{{ accesso.ditta }}" 
-                                                data-ora-ingresso="{{ accesso.oraIngresso|date:'H:i' }}" 
-                                                data-ora-uscita="{{ accesso.oraUscita|date:'H:i' }}">
-                                            <i class="bi bi-pencil-fill"></i>
-                                        </button>
-                                        {% else %}
-                                        <span class="small" style="color: var(--text-muted);">-</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        {% else %}
-                        <div class="text-center py-5">
-                            <i class="bi bi-clipboard-x opacity-50" style="font-size: 3rem; color: var(--text-muted);"></i>
-                            <p class="mt-3 fw-medium" style="color: var(--text-muted);">Nessun accesso registrato oggi.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="card-custom">
-                    <div class="card-header-custom border-bottom-0" style="background-color: var(--bg-input);">
-                        <div class="d-flex align-items-center gap-2" style="color: var(--text-muted);">
-                            <i class="bi bi-telegram text-info"></i>
-                            <span class="fs-6">Comunica con il personale INAF</span>
-                        </div>
-                    </div>
-                    <div class="card-body-custom pt-0 pb-3" style="background-color: var(--bg-input);">
-                        <form method="post" action="{% url 'messaggioTelegram' %}">
-                            {% csrf_token %}
-                            <div class="input-group">
-                                <textarea class="form-control border-end-0" id="messaggio" name="messaggio" rows="1" placeholder="Scrivi un messaggio..." style="resize: none; background-color: var(--bg-card);"></textarea>
-                                <button type="submit" class="btn btn-primary-custom px-4">
-                                    <i class="bi bi-send-fill"></i> Invia
-                                </button>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label">Note del giorno</label>
+                                    <textarea class="form-input" name="note" rows="5" 
+                                        placeholder="Annotazioni, eventi..."
+                                        {% if not data|date:"Y-m-d" == oggi %}disabled{% endif %}>{{ note }}</textarea>
+                                </div>
                             </div>
-                        </form>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col-lg-4">
-                
-                <div class="row g-3 mb-3">
-                    <div class="col-6">
-                        <div class="card-custom mb-0 p-3 text-center h-100">
-                            <small class="text-uppercase fw-bold" style="font-size: 0.7rem; color: var(--text-muted);">Inizio Turno</small>
-                            <div class="fs-5 fw-bold mt-1" style="color: var(--primary-color);">{{ turno_attivo.orario_inizio|date:"H:i:s" }}</div>
-                            <small style="color: var(--text-muted);">{{ turno_attivo.orario_inizio|date:"d/m/Y" }}</small>
+                            <div class="col-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label">Presenze INAF</label>
+                                    <div class="checklist {% if not data|date:'Y-m-d' == oggi %}checklist-readonly{% endif %}">
+                                        {% if data|date:"Y-m-d" == oggi %}
+                                            {% for persona in listaPersonaleINAF %}
+                                            <div class="checklist-item">
+                                                <input type="checkbox" id="p_{{ persona.id }}" name="personale_ids" value="{{ persona.id }}"
+                                                    {% if persona.id in personaleINAFpresente %}checked{% endif %}>
+                                                <label for="p_{{ persona.id }}">{{ persona.nominativo }}</label>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% for p in listaPersonaleINAF %}
+                                            <div class="checklist-item">
+                                                {% if p.is_present %}
+                                                <i class="bi bi-check-circle-fill text-success"></i>
+                                                {% else %}
+                                                <i class="bi bi-x-circle text-muted"></i>
+                                                {% endif %}
+                                                <span>{{ p.personale.nominativo }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="card-custom mb-0 p-3 text-center h-100" style="background-color: var(--primary-color); border: none;">
-                            <small class="text-uppercase text-white fw-bold" style="font-size: 0.7rem;">Ora Attuale</small>
-                            <div id="current-time-clock" class="fs-4 fw-bold mt-1 text-white">--:--</div>
-                            <small id="current-date-display" class="text-white"></small>
+                </div>
+            </form>
+        </section>
+
+        <aside>
+            <div class="card marcatura-card sidebar-section" id="marcatura-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-stopwatch text-danger"></i>
+                        Marcatura
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="marcatura-times">
+                        <div class="time-box">
+                            <div class="time-label">Ultima</div>
+                            <div class="time-value" id="ultima_marcatura">{% if ultimaMarcatura %}{{ ultimaMarcatura.orario|date:"H:i" }}{% else %}-{% endif %}</div>
+                        </div>
+                        <div class="time-box next">
+                            <div class="time-label">Prossima</div>
+                            <div class="time-value" id="prossima_marcatura">--:--</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="card-custom p-3">
-                    <form method="post" action="" class="d-flex gap-2">
+                    <form method="post" action="">
                         {% csrf_token %}
-                        <input type="date" class="form-control" id="data_ricerca" name="data_ricerca" value="{{ data }}" required>
-                        <button type="submit" class="btn btn-primary-custom btn-sm"><i class="bi bi-search"></i></button>
-                        <a href="" class="btn btn-secondary-custom btn-sm d-flex align-items-center">Oggi</a>
+                        <input type="hidden" name="esegui_marcatura" value="1">
+                        <button type="submit" class="btn-primary btn-block btn-lg" id="btnMarcatura">
+                            <i class="bi bi-check2-circle"></i> Esegui Marcatura
+                        </button>
                     </form>
                 </div>
+            </div>
 
-                <div class="card-custom p-3">
-                    <div class="row g-2"> <div class="col-6">
-                            <label class="section-label mb-1 lh-1">ULTIMA</label>
-                            <input type="text" class="form-control text-center fw-bold" 
-                                value="{% if ultimaMarcatura %}{{ ultimaMarcatura.orario|date:'H:i' }}{% else %}-{% endif %}" 
-                                disabled 
-                                title="Orario ultima marcatura"
-                                id="ultima_marcatura">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-info-circle text-info"></i>
+                        Info Turno
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column gap-3">
+                        <div>
+                            <div class="form-label">Vigilante</div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="user-avatar" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                    {{ request.user.username|make_list|first|upper }}
+                                </div>
+                                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                            </div>
                         </div>
-
-                        <div class="col-6">
-                            <label class="section-label mb-1 lh-1 text-primary">PROSSIMA</label>
-                            <input type="text" class="form-control text-center fw-bold" 
-                                value="--:--" 
-                                disabled 
-                                style="color: var(--primary-color); border-color: var(--primary-color);"
-                                title="Orario prossima marcatura prevista"
-                                id="prossima_marcatura">
+                        <div>
+                            <div class="form-label">Data Visualizzata</div>
+                            <strong>{{ data|date:"l d F Y" }}</strong>
                         </div>
-
-                        <div class="col-12 mt-3">
-                            <form method="post" action=""> 
-                                {% csrf_token %}
-                                <input type="hidden" name="esegui_marcatura" id="esegui_marcatura">
-                                <button type="submit" id="btnMarcatura" class="btn btn-primary-custom w-100 fw-medium d-flex align-items-center justify-content-center gap-2">
-                                    <i class="bi bi-check2-circle"></i> Esegui marcatura
-                                </button>
-                            </form>
+                        <div>
+                            <div class="form-label">Stato</div>
+                            {% if data|date:"Y-m-d" == oggi %}
+                            <span class="badge badge-success">
+                                <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i> Turno Attivo
+                            </span>
+                            {% else %}
+                            <span class="badge badge-muted">
+                                <i class="bi bi-archive"></i> Archivio
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
+            </div>
+        </aside>
+    </main>
 
-                <form method="post" action="{% url 'aggiornaRegistro' %}">
+    <div class="modal fade" id="aggiungiPersonaleEsternoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus-fill text-primary me-2"></i>
+                        Nuovo Accesso
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'registraAccesso' turno_attivo.id %}">
                     {% csrf_token %}
-                    
-                    <div class="card-custom">
-                        <div class="card-header-custom">
-                            <span><i class="bi bi-clipboard-data text-warning me-2"></i>Rapporto Turno</span>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Nominativi (uno per riga)</label>
+                            <textarea class="form-input" name="nominativi" rows="3" required placeholder="Mario Rossi&#10;Luigi Bianchi"></textarea>
                         </div>
-                        
-                        <div class="card-body-custom">
-                            
-                            <label for="note" class="section-label">Note del Giorno</label>
-                            <textarea class="form-control mb-4" id="note" name="note" rows="8" placeholder="Annotazioni turno..." {% if not data|date:"Y-m-d" == oggi %}disabled{% endif %}>{{ note }}</textarea>
-                            
-                            <label class="section-label">Presenze INAF</label>
-                            <div class="checklist-container mb-4">
-                                {% if data|date:"Y-m-d" == oggi %}
-                                    {% for persona in listaPersonaleINAF %}
-                                    <div class="checklist-item form-check d-flex align-items-center ps-2" style="background-color: var(--bg-inputNOTE);">
-                                        <input class="form-check-input ms-0 me-2" type="checkbox" value="{{ persona.id }}" id="personale_{{ persona.id }}" name="personale_ids" {% if persona.id in personaleINAFpresente %}checked{% endif %}>
-                                        <label class="form-check-label flex-grow-1 cursor-pointer" for="personale_{{ persona.id }}">
-                                            {{ persona.nominativo }}
-                                        </label>
-                                    </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div style="color: var(--text-muted); font-style: italic; padding: 0.5rem;">
-                                        {% for p in listaPersonaleINAF %}
-                                        <div class="py-1 border-bottom" style="border-color: var(--border-color) !important;">
-                                            {% if p.is_present %}
-                                            <i class="bi bi-check-circle-fill text-success me-2"></i> {{ p.personale.nominativo }}
-                                            {% else %}
-                                            <i class="bi bi-x-circle-fill text-danger me-2"></i> {{ p.personale.nominativo }}
-                                            {% endif %}
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">Ditta</label>
+                            <input type="text" class="form-input" name="ditta" required placeholder="Nome azienda">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Ora Ingresso</label>
+                            <input type="time" class="form-input" name="oraIngresso" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="bi bi-check-lg"></i> Registra
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                            {% if data|date:"Y-m-d" == oggi %}
-                            <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold">
-                                <i class="bi bi-save me-2"></i> Salva Modifiche
+    <div class="modal fade" id="modificaPersonaleEsternoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square text-warning me-2"></i>
+                        Modifica Accesso
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="" id="editForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">Nominativi</label>
+                            <input type="text" class="form-input" id="edit_nominativi" name="nominativi" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ditta</label>
+                            <input type="text" class="form-input" id="edit_ditta" name="ditta" required>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label">Ingresso</label>
+                                    <input type="time" class="form-input" id="edit_oraIngresso" name="oraIngresso" required>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group mb-0">
+                                    <label class="form-label">Uscita</label>
+                                    <input type="time" class="form-input" id="edit_oraUscita" name="oraUscita">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="submit" formaction="" id="deleteBtn" class="btn-ghost text-danger" 
+                            onclick="return confirm('Eliminare questo accesso?');">
+                            <i class="bi bi-trash"></i> Elimina
+                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                            <button type="submit" class="btn-primary">
+                                <i class="bi bi-check-lg"></i> Aggiorna
                             </button>
-                            {% else %}
-                            <button type="button" class="btn btn-secondary-custom w-100 py-2" disabled>
-                                <i class="bi bi-lock-fill me-2"></i> Modifiche Bloccate
-                            </button>
-                            {% endif %}
-                            
                         </div>
                     </div>
                 </form>
-
             </div>
         </div>
     </div>
 
-    <footer class="text-center py-3 mt-auto small" style="color: var(--text-muted);">
-        <p class="mb-0">Auto-aggiornamento in <span id="countdown" class="fw-bold" style="color: var(--primary-color);"></span> secondi</p>
-    </footer>
-
-
-    <div class="modal fade" id="aggiungiPersonaleEsternoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="replyModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4">
-                <div class="modal-header pb-0">
-                    <h5 class="modal-title fw-bold">Nuovo Accesso</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-chat-dots-fill text-info me-2"></i>
+                        Messaggio INAF
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <form method="post" action="{% url 'registraAccesso' turno_attivo.id %}">
-                        {% csrf_token %}
-                        <div class="form-floating mb-3">
-                            <textarea class="form-control" id="nominativi" name="nominativi" placeholder="Nome Cognome" style="height: 100px" required></textarea>
-                            <label for="nominativi">Nominativi (uno per riga)</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ditta" name="ditta" placeholder="Azienda" required>
-                            <label for="ditta">Ditta</label>
-                        </div>
-                        <div class="form-floating mb-4">
-                            <input type="time" class="form-control" id="oraIngresso" name="oraIngresso" required>
-                            <label for="oraIngresso">Ora Ingresso</label>
-                        </div>
-                        <div class="d-grid gap-2 d-flex justify-content-end">
-                            <button type="button" class="btn btn-secondary-custom px-4" data-bs-dismiss="modal">Annulla</button>
-                            <button type="submit" class="btn btn-primary-custom px-4">Salva</button>
-                        </div>
-                    </form>
+                <div class="modal-body">
+                    <div id="reply-box" class="p-3 rounded" style="background: var(--bg-muted); max-height: 300px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="modificaPersonaleEsternoModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4">
-                <div class="modal-header pb-0">
-                    <h5 class="modal-title fw-bold">Gestione Accesso</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <form method="post" action="">
-                        {% csrf_token %}
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="nominativi" name="nominativi" required>
-                            <label for="nominativi">Nominativi</label>
-                        </div>
-                        <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ditta" name="ditta" required>
-                            <label for="ditta">Ditta</label>
-                        </div>
-                        <div class="row g-2 mb-4">
-                            <div class="col-6">
-                                <div class="form-floating">
-                                    <input type="time" class="form-control" id="oraIngresso" name="oraIngresso" required>
-                                    <label for="oraIngresso">Ingresso</label>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="form-floating">
-                                    <input type="time" class="form-control" id="oraUscita" name="oraUscita">
-                                    <label for="oraUscita">Uscita</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-4">
-                            <button type="submit" formaction="" id="deleteBTN" name="deleteBTN" class="btn btn-link text-danger text-decoration-none p-0" onclick="return confirm('Sei sicuro di voler eliminare questo accesso?');">
-                                <i class="bi bi-trash"></i> Elimina
-                            </button>
-                            <button type="submit" class="btn btn-primary-custom px-4">Aggiorna</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <img id="bouncing-cat" src="{% static 'cat.gif' %}" alt="Easter Egg">
+    <img id="bouncing-cat" src="{% static 'cat.gif' %}" alt="">
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-
     <script>
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            if (theme === 'dark') {
-                themeIcon.classList.remove('bi-moon-stars-fill');
-                themeIcon.classList.add('bi-sun-fill');
-                themeToggleBtn.classList.replace('btn-secondary-custom', 'btn-light');
-            } else {
-                themeIcon.classList.remove('bi-sun-fill');
-                themeIcon.classList.add('bi-moon-stars-fill');
-                themeToggleBtn.classList.replace('btn-light', 'btn-secondary-custom');
-            }
-        }
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        setTheme(savedTheme);
-        themeToggleBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            let bsReplyModal = new bootstrap.Modal(document.getElementById('replyModal'));
-            const replyBox = document.getElementById('reply-box');
-            const replyNotification = document.getElementById('reply-notification');
-            document.getElementById('replyModal').addEventListener('hidden.bs.modal', function () {
-                replyNotification.classList.add('d-none');
-                replyBox.innerHTML = '';
-            });
-
-            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const wsUrl = protocol + window.location.host + '/ws/replies/';
-
-            try {
-                const repliesSocket = new WebSocket(wsUrl);
-
-                repliesSocket.onmessage = function(e) {
-                    const data = JSON.parse(e.data);
-                    const message = data.message;
-                    const now = new Date();
-                    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    replyBox.innerHTML += `<div class="mb-2 pb-2 border-bottom" style="border-color: var(--border-color) !important;"><strong style="color: var(--primary-color);">${timeStr}:</strong> ${message}</div>`;
-                    bsReplyModal.show();
-                    replyNotification.classList.remove('d-none');
-                };
-                repliesSocket.onclose = function(e) {
-                    console.log('Chat socket closed');
-                };
-            } catch(e) {
-                console.warn("WebSocket non disponibile o errore connessione");
-            }
-        });
-
-        let alertState = 'ok'; 
-
-        function updateTime() {
+        function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: false });
-            const dateString = now.toLocaleDateString('it-IT', {weekday: 'short', day: 'numeric', month: 'long'});
-            const clockEl = document.getElementById('current-time-clock');
-            if(clockEl) clockEl.textContent = timeString;
+            const time = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const date = now.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             
-            const dateEl = document.getElementById('current-date-display');
-            if(dateEl) dateEl.textContent = dateString;
-            checkDeadline(now);
+            const el = document.getElementById('current-time');
+            const dateEl = document.getElementById('current-date');
+            if (el) el.textContent = time;
+            if (dateEl) dateEl.textContent = date;
+            
+            checkMarcatura(now);
         }
 
-        function checkDeadline(now) {
-            const lastMarkInput = document.getElementById('ultima_marcatura');
-            const nextMarkInput = document.getElementById('prossima_marcatura');
-            const btnMarcatura = document.getElementById('btnMarcatura');
+        let alertState = 'ok';
+        
+        function checkMarcatura(now) {
+            const lastEl = document.getElementById('ultima_marcatura');
+            const nextEl = document.getElementById('prossima_marcatura');
+            const btn = document.getElementById('btnMarcatura');
+            const card = document.getElementById('marcatura-card');
             
-            if (!lastMarkInput || !btnMarcatura) return;
-
-            const lastMarkStr = lastMarkInput.value.trim();
-            
-            if (!lastMarkStr || lastMarkStr === '-' || lastMarkStr.indexOf(':') === -1) {
-                if(nextMarkInput) nextMarkInput.value = "--:--";
+            const lastVal = lastEl?.textContent?.trim();
+            if (!lastVal || lastVal === '-' || !lastVal.includes(':')) {
+                if (nextEl) nextEl.textContent = '--:--';
                 return;
             }
 
-            const [hours, minutes] = lastMarkStr.split(':').map(Number);
-            let lastMarkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
-
-            if (lastMarkDate > now) {
-                lastMarkDate.setDate(lastMarkDate.getDate() - 1);
-            }
-
-            const deadlineDate = new Date(lastMarkDate.getTime() + 60 * 60 * 1000);
+            const [h, m] = lastVal.split(':').map(Number);
+            let lastDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+            if (lastDate > now) lastDate.setDate(lastDate.getDate() - 1);
             
-            if(nextMarkInput) {
-                nextMarkInput.value = deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
+            const deadline = new Date(lastDate.getTime() + 60 * 60 * 1000);
+            const nextTime = deadline.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            
+            if (nextEl) nextEl.textContent = nextTime;
 
-            const diffMs = deadlineDate - now;
-            const minutesLeft = Math.floor(diffMs / 1000 / 60);
+            const minLeft = Math.floor((deadline - now) / 60000);
 
-            btnMarcatura.classList.remove('btn-warning-custom', 'btn-urgent');
+            if (card) card.classList.remove('warning', 'urgent');
+            if (btn) { btn.style.background = ''; btn.style.animation = ''; }
 
-            if (minutesLeft <= 5) {
-                btnMarcatura.classList.add('btn-urgent');
-                if (alertState !== 'urgent' && minutesLeft > -60) { 
-                    alert(`⚠️ URGENTE\n\nScadenza marcatura: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano meno di 5 minuti!)`);
+            if (minLeft <= 5) {
+                if (card) card.classList.add('urgent');
+                if (btn) { btn.style.background = 'var(--danger)'; btn.style.animation = 'pulse-bar 0.5s infinite'; }
+                if (alertState !== 'urgent' && minLeft > -60) {
+                    alert(`⚠️ URGENTE!\n\nMarcatura entro le ${nextTime}\n(Mancano meno di 5 minuti)`);
                     alertState = 'urgent';
                 }
-            } 
-            else if (minutesLeft <= 15) {
-                btnMarcatura.classList.add('btn-warning-custom');
+            } else if (minLeft <= 15) {
+                if (card) card.classList.add('warning');
+                if (btn) btn.style.background = 'var(--warning)';
                 if (alertState !== 'warning') {
-                    alert(`ℹ️ AVVISO\n\nProssima marcatura prevista per le: ${deadlineDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}\n(Mancano 15 minuti)`);
+                    alert(`ℹ️ AVVISO\n\nProssima marcatura: ${nextTime}\n(15 minuti)`);
                     alertState = 'warning';
                 }
-            } 
-            else {
+            } else {
                 alertState = 'ok';
             }
         }
 
-        setInterval(updateTime, 1000);
-        updateTime(); 
+        setInterval(updateClock, 1000);
+        updateClock();
 
-        const editModalEl = document.getElementById('modificaPersonaleEsternoModal');
-        if (editModalEl) {
-            editModalEl.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const id = button.getAttribute('data-id');
+        const editModal = document.getElementById('modificaPersonaleEsternoModal');
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', e => {
+                const btn = e.relatedTarget;
+                const id = btn.dataset.id;
                 
-                editModalEl.querySelector('#nominativi').value = button.getAttribute('data-nominativi') || '';
-                editModalEl.querySelector('#ditta').value = button.getAttribute('data-ditta') || '';
-                editModalEl.querySelector('#oraIngresso').value = button.getAttribute('data-ora-ingresso') || '';
-                editModalEl.querySelector('#oraUscita').value = button.getAttribute('data-ora-uscita') || '';
+                document.getElementById('edit_nominativi').value = btn.dataset.nominativi || '';
+                document.getElementById('edit_ditta').value = btn.dataset.ditta || '';
+                document.getElementById('edit_oraIngresso').value = btn.dataset.oraIngresso || '';
+                document.getElementById('edit_oraUscita').value = btn.dataset.oraUscita || '';
                 
-                const deleteBtn = editModalEl.querySelector('#deleteBTN');
-                if(deleteBtn) deleteBtn.setAttribute('formaction', `/eliminaAccesso/${id}/`);
-                
-                const form = editModalEl.querySelector('form');
-                if(form) form.action = `/aggiornaAccesso/${id}/`;
+                document.getElementById('editForm').action = `/aggiornaAccesso/${id}/`;
+                document.getElementById('deleteBtn').setAttribute('formaction', `/eliminaAccesso/${id}/`);
             });
         }
 
-        let timeLeft = 300;
-        const countdownElement = document.getElementById('countdown');
-        const countdownTimer = setInterval(() => {
-            timeLeft--;
-            if(countdownElement) countdownElement.textContent = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(countdownTimer);
-                location.reload();
+        document.addEventListener('DOMContentLoaded', () => {
+            const replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
+            const replyBox = document.getElementById('reply-box');
+            
+            try {
+                const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws/replies/');
+                ws.onmessage = e => {
+                    const { message } = JSON.parse(e.data);
+                    const time = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+                    replyBox.innerHTML += `<div class="mb-2 pb-2 border-bottom"><strong class="text-primary">${time}</strong>: ${message}</div>`;
+                    replyModal.show();
+                };
+            } catch (e) {
+                console.warn('WebSocket non disponibile');
             }
-        }, 1000);
 
-        /* ----------------------- */
-        /* ----- EASTER EGG ------ */
-        /* ----------------------- */
-        document.addEventListener('DOMContentLoaded', function() {
             const cat = document.getElementById('bouncing-cat');
+            let x = 0, y = 0, dx = 4, dy = 4, moving = false;
             
-            let x = 0, y = 0;
-            let dx = 3, dy = 3;
-            let isMoving = false;
-            
-            let winW = window.innerWidth;
-            let winH = window.innerHeight;
-
-            window.addEventListener('resize', () => {
-                winW = window.innerWidth;
-                winH = window.innerHeight;
-            });
-
             function moveCat() {
-                if (!isMoving) return;
-
-                if (x + cat.clientWidth >= winW || x <= 0) {
-                    dx = -dx;
-                    cat.style.transform = dx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-                }
-                if (y + cat.clientHeight >= winH || y <= 0) {
-                    dy = -dy;
-                }
-
-                x += dx;
-                y += dy;
-
+                if (!moving) return;
+                const w = window.innerWidth, h = window.innerHeight;
+                const catW = cat.offsetWidth || 120;
+                const catH = cat.offsetHeight || 120;
+                if (x + catW >= w || x <= 0) { dx = -dx; cat.style.transform = `scaleX(${dx > 0 ? 1 : -1})`; }
+                if (y + catH >= h || y <= 0) dy = -dy;
+                x += dx; y += dy;
                 cat.style.left = x + 'px';
                 cat.style.top = y + 'px';
-
                 requestAnimationFrame(moveCat);
             }
 
-            function startEasterEgg() {
-                if(isMoving) return;
-                
-                x = Math.random() * (winW - 150);
-                y = Math.random() * (winH - 150);
-                
-                dx = (Math.random() > 0.5 ? 3 : -3);
-                dy = (Math.random() > 0.5 ? 3 : -3);
-                
+            document.getElementById('navbar-brand-logo')?.addEventListener('dblclick', e => {
+                e.preventDefault();
+                if (moving) return;
+                x = Math.random() * (window.innerWidth - 150);
+                y = Math.random() * (window.innerHeight - 150);
                 cat.style.left = x + 'px';
                 cat.style.top = y + 'px';
-                cat.style.transform = dx > 0 ? 'scaleX(1)' : 'scaleX(-1)';
                 cat.style.display = 'block';
-                
-                setTimeout(() => { cat.style.opacity = '1'; }, 50);
-                
-                isMoving = true;
+                setTimeout(() => cat.style.opacity = '1', 50);
+                moving = true;
                 moveCat();
-
                 setTimeout(() => {
                     cat.style.opacity = '0';
-                    setTimeout(() => {
-                        isMoving = false;
-                        cat.style.display = 'none';
-                        scheduleNextCat();
-                    }, 1000);
-                }, 20000); 
-            }
-
-            // Trigger manuale
-            const logo = document.getElementById('navbar-brand-logo');
-            if(logo) {
-                logo.addEventListener('dblclick', (e) => {
-                    e.preventDefault();
-                    startEasterEgg();
-                });
-            }
+                    setTimeout(() => { moving = false; cat.style.display = 'none'; }, 500);
+                }, 15000);
+            });
         });
     </script>
-
 </body>
 </html>

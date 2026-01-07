@@ -33,6 +33,7 @@ def homepage(request):
         if data == timezone.now().date().strftime("%Y-%m-%d"):
             return redirect('/')
         personaleINAF = Presenza.objects.filter(registro__data=data).select_related('personale').order_by('personale__nominativo')
+        data = timezone.datetime.strptime(data, "%Y-%m-%d").date()
     else:
         data = timezone.now().date()
         personaleINAF = PersonaleINAF.objects.all().order_by('nominativo')
